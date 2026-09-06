@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/api_endpoints.dart';
-import '../../core/data/mock_database.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_button.dart';
@@ -51,7 +50,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   int get _currentMaxAyat {
     if (_selectedSurahId == null || _surahList.isEmpty) return 286;
     final found = _surahList.firstWhere(
-      (s) => (s['id'] == _selectedSurahId || s['nomor'] == _selectedSurahId),
+      (s) => s['id'] == _selectedSurahId,
       orElse: () => null,
     );
     if (found == null) return 286;
@@ -62,32 +61,42 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
     List<dynamic> kelasBinaan = [];
     List<dynamic> surahs = [];
 
-    // 1. Ambil data kelas binaan guru dari API
+    // 1. Ambil data kelas binaan & santri langsung dari API database MySQL
     try {
       final dashRes = await ApiClient().dio.get(ApiEndpoints.guruDashboard);
       final dashboardData = dashRes.data['data'] as Map<String, dynamic>?;
       kelasBinaan = (dashboardData?['kelas_binaan'] as List?) ?? [];
-    } catch (_) {
-      // Fallback ke data kelas lokal jika server tidak merespons
-      kelasBinaan = MockDatabase().classes.map((c) => {
-        'id': c['id'],
-        'nama_kelas': c['nama_kelas'],
-        'santris': MockDatabase().santris.where((s) => s['kelas_id'] == c['id']).toList(),
-      }).toList();
+    } catch (e) {
+      debugPrint('Gagal memuat kelas binaan dari server: $e');
     }
 
-    // 2. Ambil data surah (dengan auto-fallback ke master 37 Surah Juz 30)
+    // 2. Ambil data surah langsung dari API database MySQL (Juz 30 nomor 78 - 114)
     try {
       final surahRes = await ApiClient().dio.get(ApiEndpoints.surahs);
       final rawSurahs = (surahRes.data['data'] as List?) ?? [];
-      if (rawSurahs.isNotEmpty) {
-        surahs = rawSurahs;
-      } else {
-        surahs = MockDatabase().surahs;
+      
+      // Ambil hanya surah Juz 30 yang terdaftar di database MySQL
+      final juz30Surahs = rawSurahs.where((s) {
+        final nomor = (s['nomor'] ?? s['number']) as num?;
+        return nomor != null && nomor >= 78 && nomor <= 114;
+      }).toList();
+
+      if (juz30Surahs.isNotEmpty) {
+        surahs = juz30Surahs.map((s) {
+          final nomor = ((s['nomor'] ?? s['number']) as num).toInt();
+          // Di database MySQL murabbi, id: 1 adalah nomor 78 (An-Naba), id: 37 adalah nomor 114 (An-Nas)
+          final dbId = (s['id'] != null && (s['id'] as num) <= 37 && (s['id'] as num) >= 1)
+              ? (s['id'] as num).toInt()
+              : (nomor - 77);
+          return {
+            ...s,
+            'id': dbId,
+            'nomor': nomor,
+          };
+        }).toList();
       }
-    } catch (_) {
-      // Fallback aman ke katalog 37 surah Al-Qur'an Juz 30
-      surahs = MockDatabase().surahs;
+    } catch (e) {
+      debugPrint('Gagal memuat surah dari server: $e');
     }
 
     if (!mounted) return;
@@ -104,12 +113,24 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         if (_santriList.isNotEmpty) {
           _selectedSantriId = _santriList[0]['id'];
           _selectedSantriName = _santriList[0]['nama_lengkap'] ?? 'Pilih Santri';
+        } else {
+          _selectedSantriId = null;
+          _selectedSantriName = 'Tidak ada santri';
         }
+      } else {
+        _selectedKelasId = null;
+        _selectedKelasName = 'Pilih Kelas / Rombel';
+        _santriList = [];
+        _selectedSantriId = null;
+        _selectedSantriName = 'Pilih Santri';
       }
+
       if (_surahList.isNotEmpty) {
-        _selectedSurahId =
-            _surahList[0]['id'] as int? ?? _surahList[0]['nomor'] as int?;
-        _selectedSurahName = _surahList[0]['nama_latin'] ?? 'Surah';
+        _selectedSurahId = _surahList[0]['id'] as int?;
+        _selectedSurahName = '${_surahList[0]['nomor']}. ${_surahList[0]['nama_latin']}';
+      } else {
+        _selectedSurahId = null;
+        _selectedSurahName = 'Pilih Surah';
       }
     });
 
@@ -138,15 +159,11 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _completedSurahIds = completed;
         _autoAdjustSelectedSurah();
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      // Fallback offline/demo mode: santri 1 sudah menyelesaikan Surah 78 (An-Naba')
-      final fallbackCompleted = <int>{};
-      if (santriId == 1) {
-        fallbackCompleted.add(78);
-      }
+      debugPrint('Gagal memuat status tuntas santri: $e');
       setState(() {
-        _completedSurahIds = fallbackCompleted;
+        _completedSurahIds = {};
         _autoAdjustSelectedSurah();
       });
     } finally {
@@ -163,8 +180,8 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
     if (isCurrentCompleted || _selectedSurahId == null) {
       final nextSurah = _surahList.firstWhere(
         (s) {
-          final id = (s['id'] ?? s['nomor']) as int;
-          return !_completedSurahIds.contains(id);
+          final id = s['id'] as int?;
+          return id != null && !_completedSurahIds.contains(id);
         },
         orElse: () => null,
       );
@@ -186,10 +203,12 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   void _selectSurah(dynamic surah) {
     final max = (surah['jumlah_ayat'] as num?)?.toInt() ?? 286;
-    final sId = (surah['id'] ?? surah['nomor']) as int;
+    final sId = surah['id'] as int;
+    final nomor = surah['nomor'];
+    final namaLatin = surah['nama_latin'] ?? '';
     setState(() {
       _selectedSurahId = sId;
-      _selectedSurahName = surah['nama_latin'] ?? '';
+      _selectedSurahName = nomor != null ? '$nomor. $namaLatin' : namaLatin;
 
       final currentSelesai = int.tryParse(_ayatSelesaiCtrl.text.trim()) ?? max;
       final currentMulai = int.tryParse(_ayatMulaiCtrl.text.trim()) ?? 1;
@@ -486,7 +505,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                   itemCount: _surahList.length,
                   itemBuilder: (context, i) {
                     final surah = _surahList[i];
-                    final surahId = (surah['id'] ?? surah['nomor']) as int;
+                    final surahId = surah['id'] as int;
                     final isCompleted = _completedSurahIds.contains(surahId);
                     final isSelected = _selectedSurahId == surahId;
 
@@ -531,7 +550,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                                   ),
                           ),
                           title: Text(
-                            surah['nama_latin'] ?? '',
+                            '${surah['nomor']}. ${surah['nama_latin'] ?? ''}',
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
