@@ -639,7 +639,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                                           ],
                                         ),
                                         subtitle: Text(
-                                          'NIS: ${s['nis'] ?? "-"} · Progres: ${s['progress_pct'] ?? 0}%${sudahSetor ? " · Sudah setor" : " · Belum setor"}',
+                                          'NIS: ${s['nis'] ?? "-"}${sudahSetor ? " · Sudah setor hari ini" : " · Belum setor hari ini"}',
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             color: sudahSetor ? AppColors.primary : AppColors.muted,

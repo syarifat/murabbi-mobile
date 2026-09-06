@@ -237,6 +237,8 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
       await prefs.remove('user_name');
       await prefs.remove('user_email');
 
+      if (!mounted) return;
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -346,8 +348,6 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                       ..._kelasBinaan.map((kelas) => _buildKelasCard(kelas)),
 
                     const SizedBox(height: 16),
-                    _buildProfileItem(Icons.menu_book, 'Target Semester Ini', 'Tuntas Juz 30 & Juz 29'),
-                    const SizedBox(height: 10),
                     _buildProfileItem(Icons.lock_outline, 'Email Akun', guruEmail),
                     const SizedBox(height: 24),
 
