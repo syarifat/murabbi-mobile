@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,6 +40,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   // Setoran Selesai / Tuntas untuk Santri Terpilih
   Set<int> _completedSurahIds = {};
+  Map<int, int> _lastAyatBySurah = {};
   bool _isLoadingHistory = false;
 
   @override
@@ -141,7 +143,12 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   Future<void> _fetchCompletedSurahsForSantri(int? santriId) async {
     if (santriId == null) {
-      if (mounted) setState(() => _completedSurahIds = {});
+      if (mounted) {
+        setState(() {
+          _completedSurahIds = {};
+          _lastAyatBySurah = {};
+        });
+      }
       return;
     }
 
@@ -150,13 +157,49 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       final res = await ApiClient().dio.get(
         ApiEndpoints.santriCompletedSurahs(santriId),
       );
-      if (!mounted) return;
       final rawList =
           (res.data['data']?['completed_surah_ids'] as List?) ?? [];
       final completed = rawList.map((e) => (e as num).toInt()).toSet();
 
+      final parsedLastAyat = <int, int>{};
+      final rawLastAyat = res.data['data']?['last_ayat_by_surah'];
+      if (rawLastAyat is Map) {
+        rawLastAyat.forEach((k, v) {
+          final sId = int.tryParse(k.toString());
+          final aVal = (v as num?)?.toInt();
+          if (sId != null && aVal != null) {
+            parsedLastAyat[sId] = aVal;
+          }
+        });
+      }
+
+      // Ambil juga riwayat setoran riil untuk santri ini dari server
+      try {
+        final setoransRes = await ApiClient().dio.get(
+          ApiEndpoints.setorans,
+          queryParameters: {'search': _selectedSantriName},
+        );
+        final setoransData = setoransRes.data['data'];
+        final sList = setoransData is Map<String, dynamic>
+            ? (setoransData['data'] as List? ?? [])
+            : (setoransData as List? ?? []);
+        for (final item in sList) {
+          if (item is Map &&
+              item['santri_id'] == santriId &&
+              item['status'] != 'mengulang') {
+            final sId = (item['surah_id'] as num?)?.toInt();
+            final aSelesai = (item['ayat_selesai'] as num?)?.toInt() ?? 0;
+            if (sId != null && aSelesai > (parsedLastAyat[sId] ?? 0)) {
+              parsedLastAyat[sId] = aSelesai;
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (!mounted) return;
       setState(() {
         _completedSurahIds = completed;
+        _lastAyatBySurah = parsedLastAyat;
         _autoAdjustSelectedSurah();
       });
     } catch (e) {
@@ -164,10 +207,31 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       debugPrint('Gagal memuat status tuntas santri: $e');
       setState(() {
         _completedSurahIds = {};
+        _lastAyatBySurah = {};
         _autoAdjustSelectedSurah();
       });
     } finally {
       if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  void _updateAyatControllersForSelectedSurah() {
+    if (_selectedSurahId == null) return;
+    final max = _currentMaxAyat;
+    final lastAyat = _lastAyatBySurah[_selectedSurahId!] ?? 0;
+
+    if (lastAyat > 0 && lastAyat < max) {
+      // Santri sudah mencapai lastAyat, otomatis lanjutkan dari lastAyat + 1 s/d max (atau habis)!
+      _ayatMulaiCtrl.text = (lastAyat + 1).toString();
+      _ayatSelesaiCtrl.text = max.toString();
+    } else if (lastAyat >= max) {
+      // Sudah tuntas (misal ingin muroja'ah)
+      _ayatMulaiCtrl.text = '1';
+      _ayatSelesaiCtrl.text = max.toString();
+    } else {
+      // Belum pernah setor surah ini
+      _ayatMulaiCtrl.text = '1';
+      _ayatSelesaiCtrl.text = max <= 20 ? max.toString() : '20';
     }
   }
 
@@ -196,32 +260,18 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _selectedSurahName = 'Semua Surah Selesai Dihafal';
       }
     } else {
-      final max = _currentMaxAyat;
-      final currentSelesai = int.tryParse(_ayatSelesaiCtrl.text.trim()) ?? max;
-      if (currentSelesai > max) {
-        _ayatSelesaiCtrl.text = max.toString();
-      }
+      _updateAyatControllersForSelectedSurah();
     }
   }
 
   void _selectSurah(dynamic surah) {
-    final max = (surah['jumlah_ayat'] as num?)?.toInt() ?? 286;
     final sId = surah['id'] as int;
     final nomor = surah['nomor'];
     final namaLatin = surah['nama_latin'] ?? '';
     setState(() {
       _selectedSurahId = sId;
       _selectedSurahName = nomor != null ? '$nomor. $namaLatin' : namaLatin;
-
-      final currentSelesai = int.tryParse(_ayatSelesaiCtrl.text.trim()) ?? max;
-      final currentMulai = int.tryParse(_ayatMulaiCtrl.text.trim()) ?? 1;
-
-      if (currentSelesai > max) {
-        _ayatSelesaiCtrl.text = max.toString();
-      }
-      if (currentMulai > max) {
-        _ayatMulaiCtrl.text = '1';
-      }
+      _updateAyatControllersForSelectedSurah();
     });
   }
 
@@ -571,12 +621,16 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                           subtitle: Text(
                             isCompleted
                                 ? 'Sudah Tuntas Diselesaikan Santri'
-                                : '${surah['jumlah_ayat']} Ayat · ${surah['tempat_turun'] ?? ""}',
+                                : ((_lastAyatBySurah[surahId] ?? 0) > 0
+                                    ? 'Hafalan terakhir: Ayat 1-${_lastAyatBySurah[surahId]} · ${surah['jumlah_ayat']} Ayat'
+                                    : '${surah['jumlah_ayat']} Ayat · ${surah['tempat_turun'] ?? ""}'),
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: isCompleted
                                   ? AppColors.muted
-                                  : AppColors.sub,
+                                  : ((_lastAyatBySurah[surahId] ?? 0) > 0
+                                      ? AppColors.primary
+                                      : AppColors.sub),
                             ),
                           ),
                           trailing: isCompleted
@@ -663,6 +717,21 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       return;
     }
 
+    final lastAyat = _lastAyatBySurah[_selectedSurahId!] ?? 0;
+
+    // Validasi kelanjutan hafalan: jika bukan status mengulang dan mulai <= lastAyat
+    if (lastAyat > 0 && _statusTajwid != 'mengulang' && mulai <= lastAyat) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.red,
+          content: Text(
+            'Ayat 1-$lastAyat sudah disetorkan sebelumnya. Silakan lanjutkan dari ayat ${lastAyat + 1} s/d $maxAyat, atau ubah status ke "Mengulang".',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -680,17 +749,26 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
+      // Perbarui progres hafalan lokal secara instan
+      if (_statusTajwid != 'mengulang') {
+        _lastAyatBySurah[_selectedSurahId!] = selesai;
+      }
+
       // Jika setoran menuntaskan surah (ayat_selesai == maxAyat dan bukan mengulang)
       if (selesai >= maxAyat && _statusTajwid != 'mengulang') {
         _completedSurahIds.add(_selectedSurahId!);
       }
 
       _showSuccessDialog();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        String msg = 'Gagal menyimpan setoran.';
+        if (e is DioException && e.response?.data?['message'] != null) {
+          msg = e.response!.data['message'].toString();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal menyimpan setoran.')),
+          SnackBar(backgroundColor: AppColors.red, content: Text(msg)),
         );
       }
     }
@@ -830,7 +908,61 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                       ? '${_completedSurahIds.length} surah telah diselesaikan oleh santri ini'
                       : null),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
+
+            // Indikator Progres Terakhir Surah Terpilih
+            if (_selectedSurahId != null) ...[
+              Builder(
+                builder: (context) {
+                  final lastAyat = _lastAyatBySurah[_selectedSurahId!] ?? 0;
+                  final hasPrev = lastAyat > 0;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: hasPrev
+                          ? AppColors.primaryPale
+                          : AppColors.border.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: hasPrev
+                            ? AppColors.primary.withValues(alpha: 0.35)
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          hasPrev
+                              ? Icons.bookmark_added_rounded
+                              : Icons.info_outline,
+                          size: 16,
+                          color: hasPrev ? AppColors.primary : AppColors.muted,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            hasPrev
+                                ? 'Hafalan terakhir santri: Ayat 1-$lastAyat (Lanjut otomatis ayat ${lastAyat + 1} s/d $maxAyat)'
+                                : 'Setoran awal surah ini: Ayat 1 s/d $maxAyat',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: hasPrev
+                                  ? AppColors.primary
+                                  : AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
 
             // Ayat Mulai & Selesai
             Row(
@@ -844,7 +976,10 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     onChanged: _onAyatMulaiChanged,
-                    helperText: 'Min. 1',
+                    helperText: (_selectedSurahId != null &&
+                            (_lastAyatBySurah[_selectedSurahId!] ?? 0) > 0)
+                        ? 'Lanjut ayat ${(_lastAyatBySurah[_selectedSurahId!]! + 1)}'
+                        : 'Min. 1',
                   ),
                 ),
                 const SizedBox(width: 12),
