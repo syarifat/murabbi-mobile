@@ -42,6 +42,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   Set<int> _completedSurahIds = {};
   Map<int, int> _lastAyatBySurah = {};
   bool _isLoadingHistory = false;
+  Set<int> _santriSudahSetorHariIniIds = {};
 
   @override
   void initState() {
@@ -62,17 +63,56 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   Future<void> _fetchMasterData() async {
     List<dynamic> kelasBinaan = [];
     List<dynamic> surahs = [];
+    final Set<int> todaySetorIds = {};
 
     // 1. Ambil data kelas binaan & santri langsung dari API database MySQL
     try {
       final dashRes = await ApiClient().dio.get(ApiEndpoints.guruDashboard);
       final dashboardData = dashRes.data['data'] as Map<String, dynamic>?;
       kelasBinaan = (dashboardData?['kelas_binaan'] as List?) ?? [];
+
+      // Ambil ID santri yang sudah setor hari ini dari dashboard
+      final rawTodayIds = dashboardData?['santri_sudah_setor_today_ids'] as List?;
+      if (rawTodayIds != null) {
+        for (final item in rawTodayIds) {
+          if (item is num) todaySetorIds.add(item.toInt());
+        }
+      }
+
+      for (final k in kelasBinaan) {
+        final sList = (k['santris'] as List?) ?? [];
+        for (final s in sList) {
+          if (s['sudah_setor_hari_ini'] == true && s['id'] != null) {
+            todaySetorIds.add((s['id'] as num).toInt());
+          }
+        }
+      }
     } catch (e) {
       debugPrint('Gagal memuat kelas binaan dari server: $e');
     }
 
-    // 2. Ambil data surah langsung dari API database MySQL (semua 114 surah)
+    // 2. Ambil data setoran hari ini dari API untuk verifikasi instan
+    try {
+      final now = DateTime.now();
+      final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final setoransRes = await ApiClient().dio.get(
+        ApiEndpoints.setorans,
+        queryParameters: {'tanggal': todayStr},
+      );
+      final setorList = (setoransRes.data['data']?['data'] as List?) ??
+          (setoransRes.data['data'] as List?) ??
+          [];
+      for (final item in setorList) {
+        final sId = (item['santri_id'] as num?)?.toInt();
+        if (sId != null) {
+          todaySetorIds.add(sId);
+        }
+      }
+    } catch (e) {
+      debugPrint('Info: Cek setoran hari ini: $e');
+    }
+
+    // 3. Ambil data surah langsung dari API database MySQL (semua 114 surah)
     try {
       final surahRes = await ApiClient().dio.get(ApiEndpoints.surahs);
       final rawSurahs = (surahRes.data['data'] as List?) ?? [];
@@ -99,6 +139,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
     setState(() {
       _kelasList = kelasBinaan;
       _surahList = surahs;
+      _santriSudahSetorHariIniIds = todaySetorIds;
 
       if (_kelasList.isNotEmpty) {
         _selectedKelasId = _kelasList[0]['id'];
@@ -424,70 +465,218 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (ctx, scrollCtrl) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pilih Santri',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+      builder: (ctx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final filteredSantris = _santriList.where((s) {
+              if (searchQuery.trim().isEmpty) return true;
+              final q = searchQuery.trim().toLowerCase();
+              final nama = (s['nama_lengkap'] ?? '').toString().toLowerCase();
+              final nis = (s['nis'] ?? '').toString().toLowerCase();
+              return nama.contains(q) || nis.contains(q);
+            }).toList();
+
+            final int sudahCount = _santriList.where((s) {
+              final sId = (s['id'] as num?)?.toInt();
+              return (sId != null && _santriSudahSetorHariIniIds.contains(sId)) || s['sudah_setor_hari_ini'] == true;
+            }).length;
+            final int belumCount = _santriList.length - sudahCount;
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              minChildSize: 0.4,
+              maxChildSize: 0.92,
+              expand: false,
+              builder: (ctx, scrollCtrl) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pilih Santri',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryPale,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            '$sudahCount Sudah · $belumCount Belum',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Santri bertanda hijau sudah menyetorkan hafalan hari ini.',
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      onChanged: (val) => setModalState(() => searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Cari nama santri atau NIS...',
+                        hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
+                        prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.bg,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 16),
+                    Expanded(
+                      child: _santriList.isEmpty
+                          ? const Center(child: Text('Tidak ada santri di kelas ini'))
+                          : filteredSantris.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Santri "$searchQuery" tidak ditemukan',
+                                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  controller: scrollCtrl,
+                                  itemCount: filteredSantris.length,
+                                  itemBuilder: (ctx, i) {
+                                    final s = filteredSantris[i];
+                                    final sId = (s['id'] as num?)?.toInt();
+                                    final bool sudahSetor = (sId != null && _santriSudahSetorHariIniIds.contains(sId)) || s['sudah_setor_hari_ini'] == true;
+                                    final bool isSelected = _selectedSantriId == sId;
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.primaryPale
+                                            : (sudahSetor ? AppColors.primaryPale.withValues(alpha: 0.25) : Colors.white),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppColors.primary.withValues(alpha: 0.5)
+                                              : (sudahSetor ? AppColors.primary.withValues(alpha: 0.25) : AppColors.border),
+                                        ),
+                                      ),
+                                      child: ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor: sudahSetor
+                                              ? AppColors.primaryPale
+                                              : AppColors.border.withValues(alpha: 0.4),
+                                          radius: 18,
+                                          child: sudahSetor
+                                              ? const Icon(Icons.check, size: 18, color: AppColors.primary)
+                                              : Text(
+                                                  ((s['nama_lengkap'] as String?)?.isNotEmpty == true)
+                                                      ? s['nama_lengkap'][0].toUpperCase()
+                                                      : 'S',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.dark,
+                                                  ),
+                                                ),
+                                        ),
+                                        title: Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                s['nama_lengkap'] ?? '',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.dark,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (sudahSetor) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  'Sudah Setor Hari Ini ✓',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        subtitle: Text(
+                                          'NIS: ${s['nis'] ?? "-"} · Progres: ${s['progress_pct'] ?? 0}%${sudahSetor ? " · Sudah setor" : " · Belum setor"}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            color: sudahSetor ? AppColors.primary : AppColors.muted,
+                                          ),
+                                        ),
+                                        trailing: isSelected
+                                            ? const Icon(
+                                                Icons.check_circle,
+                                                color: AppColors.primary,
+                                              )
+                                            : (sudahSetor
+                                                ? const Icon(
+                                                    Icons.done_all,
+                                                    size: 18,
+                                                    color: AppColors.primary,
+                                                  )
+                                                : null),
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedSantriId = sId;
+                                            _selectedSantriName = s['nama_lengkap'];
+                                          });
+                                          Navigator.pop(ctx);
+                                          _fetchCompletedSurahsForSantri(sId);
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                    ),
+                  ],
                 ),
               ),
-              const Divider(),
-              Expanded(
-                child: _santriList.isEmpty
-                    ? const Center(child: Text('Tidak ada santri di kelas ini'))
-                    : ListView.builder(
-                        controller: scrollCtrl,
-                        itemCount: _santriList.length,
-                        itemBuilder: (ctx, i) {
-                          final s = _santriList[i];
-                          return ListTile(
-                            title: Text(
-                              s['nama_lengkap'] ?? '',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'NIS: ${s['nis'] ?? "-"} · Progres: ${s['progress_pct'] ?? 0}%',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: AppColors.muted,
-                              ),
-                            ),
-                            trailing: _selectedSantriId == s['id']
-                                ? const Icon(
-                                    Icons.check_circle,
-                                    color: AppColors.primary,
-                                  )
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                _selectedSantriId = s['id'];
-                                _selectedSantriName = s['nama_lengkap'];
-                              });
-                              Navigator.pop(ctx);
-                              _fetchCompletedSurahsForSantri(s['id']);
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -801,6 +990,11 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _completedSurahIds.add(_selectedSurahId!);
       }
 
+      // Tandai santri ini sudah setor hari ini
+      if (_selectedSantriId != null) {
+        _santriSudahSetorHariIniIds.add(_selectedSantriId!);
+      }
+
       _showSuccessDialog();
     } catch (e) {
       if (mounted) {
@@ -926,6 +1120,23 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
               suffixIcon: const Icon(Icons.expand_more, color: AppColors.sub),
               onTap: _showSantriPicker,
             ),
+            if (_selectedSantriId != null && _santriSudahSetorHariIniIds.contains(_selectedSantriId)) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Santri ini sudah setor hari ini (bisa setor lagi jika ada tambahan)',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
 
             // Surah Picker
