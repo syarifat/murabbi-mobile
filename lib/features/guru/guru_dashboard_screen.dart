@@ -43,10 +43,10 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
         _guruName = (savedName?.isNotEmpty ?? false)
             ? savedName!
             : (data['guru']?['name']?.toString() ?? _guruName);
-        _kelasBinaan = (data['kelas_binaan'] as List?) ?? [];
+        _kelasBinaan = (data['kelas_binaan'] as List?) ?? (data['kelasBinaan'] as List?) ?? [];
         _sudahSetor = (data['stats']?['setoran_hari_ini'] as num?)?.toInt() ?? 0;
-        _totalSantri = (data['stats']?['santri_terampu'] as num?)?.toInt() ?? 0;
-        _recentFeeds = (data['recent_feed'] as List?) ?? [];
+        _totalSantri = (data['stats']?['santri_terampu'] as num?)?.toInt() ?? (data['stats']?['total_santri'] as num?)?.toInt() ?? 0;
+        _recentFeeds = (data['recent_feed'] as List?) ?? (data['recentSetorans'] as List?) ?? [];
       });
     } catch (_) {
       if (!mounted) return;

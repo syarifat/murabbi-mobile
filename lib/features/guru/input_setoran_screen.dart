@@ -44,26 +44,36 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   Future<void> _fetchMasterData() async {
     try {
+      // Ambil kelas dan surah dari guruDashboard + endpoint terpisah
       final responses = await Future.wait([
-        ApiClient().dio.get(ApiEndpoints.kelasList),
+        ApiClient().dio.get(ApiEndpoints.guruDashboard),
         ApiClient().dio.get(ApiEndpoints.surahs),
       ]);
       if (!mounted) return;
+
+      final dashboardData = responses[0].data['data'] as Map<String, dynamic>?;
+      final kelasBinaan = (dashboardData?['kelas_binaan'] as List?) ?? [];
+
       setState(() {
-        _kelasList = (responses[0].data['data'] as List?) ?? [];
+        _kelasList = kelasBinaan;
         _surahList = (responses[1].data['data'] as List?) ?? [];
+
         if (_kelasList.isNotEmpty) {
           _selectedKelasId = _kelasList[0]['id'];
           _selectedKelasName = _kelasList[0]['nama_kelas'];
+          // Ambil santris dari kelas pertama
+          final santris = (_kelasList[0]['santris'] as List?) ?? [];
+          _santriList = santris;
+          if (_santriList.isNotEmpty) {
+            _selectedSantriId = _santriList[0]['id'];
+            _selectedSantriName = _santriList[0]['nama_lengkap'];
+          }
         }
         if (_surahList.isNotEmpty) {
           _selectedSurahId = _surahList[0]['id'];
           _selectedSurahName = _surahList[0]['nama_latin'];
         }
       });
-      if (_selectedKelasId != null) {
-        await _fetchSantriByKelas(_selectedKelasId!);
-      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -73,28 +83,22 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
     }
   }
 
-  Future<void> _fetchSantriByKelas(int kelasId) async {
-    try {
-      final response = await ApiClient().dio.get(
-        ApiEndpoints.guruSantris,
-        queryParameters: {'kelas_id': kelasId},
-      );
-      if (!mounted) return;
-      final santris = (response.data['data'] as List?) ?? [];
-      setState(() {
-        _santriList = santris;
-        _selectedSantriId = santris.isEmpty ? null : santris[0]['id'];
-        _selectedSantriName = santris.isEmpty
-            ? 'Tidak ada santri'
-            : santris[0]['nama_lengkap'];
-      });
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Gagal memuat santri.')));
+  void _fetchSantriByKelas(int kelasId) {
+    final kelas = _kelasList.firstWhere(
+      (k) => k['id'] == kelasId,
+      orElse: () => {},
+    );
+    final santris = (kelas['santris'] as List?) ?? [];
+    setState(() {
+      _santriList = santris;
+      if (santris.isNotEmpty) {
+        _selectedSantriId = santris[0]['id'];
+        _selectedSantriName = santris[0]['nama_lengkap'];
+      } else {
+        _selectedSantriId = null;
+        _selectedSantriName = 'Tidak ada santri';
       }
-    }
+    });
   }
 
   void _showKelasPicker() {
