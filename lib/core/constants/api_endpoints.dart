@@ -1,8 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiEndpoints {
-  // IP Local LAN Mac (192.168.0.121) agar langsung terhubung dari HP Android fisik via Wi-Fi
-  static String baseUrl = 'http://192.168.0.125:8000/api';
+  // Production Server
+  static String baseUrl = 'https://murabbi.satcloud.tech/api';
 
   static Future<void> loadBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();

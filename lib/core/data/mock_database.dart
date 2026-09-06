@@ -12,7 +12,7 @@ class MockDatabase {
   // Active user session
   String currentRole = 'guru'; // 'guru', 'ortu', 'admin'
   String currentUserName = 'Ust. Abdullah, S.Pd.I';
-  String currentUserEmail = 'ahmad.fauzi@pesantren.id';
+  String currentUserEmail = 'ahmad.fauzi@sekolah.id';
 
   // Master Kelas
   List<Map<String, dynamic>> classes = [];

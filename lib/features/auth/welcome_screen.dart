@@ -218,7 +218,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Satu aplikasi terpadu untuk Ustadz mencatat setoran, Orang Tua memantau progres harian, dan Pesantren mengelola mutaba\'ah secara real-time.',
+                            'Satu aplikasi terpadu untuk Ustadz mencatat setoran, Orang Tua memantau progres harian, dan Sekolah mengelola mutaba\'ah secara real-time.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
                               fontSize: 12,
@@ -359,7 +359,7 @@ class WelcomeScreen extends StatelessWidget {
 
                           // Footer Tag
                           Text(
-                            'Murabbi v1.0 · Pesantren Digital Ecosystem',
+                            'Murabbi v1.0 · Sekolah Digital Ecosystem',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: AppColors.sub,

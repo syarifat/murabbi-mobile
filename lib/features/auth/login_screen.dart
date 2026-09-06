@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'Untuk pertanyaan atau pendaftaran santri baru, hubungi Sekretariat Pesantren: +62 812-3456-7890.',
+              'Untuk pertanyaan atau pendaftaran santri baru, hubungi Sekretariat Sekolah: +62 812-3456-7890.',
               style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
             ),
           ],
@@ -358,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: AppColors.dark,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'nama@pesantren.id',
+                                  hintText: 'nama@sekolah.id',
                                   filled: true,
                                   fillColor: Colors.white,
                                   prefixIcon: const Icon(
@@ -425,7 +425,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
-                                            'Silakan hubungi admin pesantren untuk reset kata sandi.',
+                                            'Silakan hubungi admin sekolah untuk reset kata sandi.',
                                           ),
                                         ),
                                       );
@@ -612,7 +612,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Data hafalan santri tersinkronisasi otomatis dengan server pesantren.',
+                                            'Data hafalan santri tersinkronisasi otomatis dengan server sekolah.',
                                             style: GoogleFonts.inter(
                                               fontSize: 10,
                                               color: const Color(0xFF047857),
@@ -648,7 +648,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'Hubungi Sekretariat Pesantren',
+                                  'Hubungi Sekretariat Sekolah',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,

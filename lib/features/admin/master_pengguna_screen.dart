@@ -199,7 +199,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'EMAIL',
-                  hint: 'zulkifli@pesantren.ac.id',
+                  hint: 'zulkifli@sekolah.ac.id',
                   controller: _emailCtrl,
                 ),
                 const SizedBox(height: 12),

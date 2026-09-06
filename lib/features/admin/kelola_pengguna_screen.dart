@@ -194,7 +194,7 @@ class _KelolaPenggunaScreenState extends State<KelolaPenggunaScreen> {
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'EMAIL LOGIN',
-                  hint: 'zulkifli@pesantren.ac.id',
+                  hint: 'zulkifli@sekolah.ac.id',
                   controller: _emailCtrl,
                 ),
                 const SizedBox(height: 12),
