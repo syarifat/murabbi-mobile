@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -373,6 +374,15 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                                       color: AppColors.dark,
                                     ),
                                   ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Hari Ini',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primaryMid,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -410,11 +420,20 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${_totalSantri - _sudahSetor} Santri',
+                                    '${math.max(0, _totalSantri - _sudahSetor)} Santri',
                                     style: GoogleFonts.inter(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                       color: AppColors.red,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Hari Ini',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.red.withValues(alpha: 0.8),
                                     ),
                                   ),
                                 ],
