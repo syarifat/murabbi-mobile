@@ -61,6 +61,7 @@ class ApiEndpoints {
 
   // Surahs
   static String get masterSurahs => '$baseUrl/admin/master/surahs';
+  static String get syncSurahsAdmin => '$baseUrl/admin/master/surahs/sync';
 
   // Setorans
   static String get setoransAdmin => '$baseUrl/admin/setorans';

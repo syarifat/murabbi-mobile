@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/constants/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/network/api_client.dart';
 
@@ -14,6 +15,9 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
   List<Map<String, dynamic>> _surahs = [];
   bool _isLoading = false;
   bool _isSyncing = false;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+  String _selectedFilter = 'Semua'; // 'Semua', 'Makkiyyah', 'Madaniyyah'
 
   @override
   void initState() {
@@ -21,10 +25,16 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
     _loadSurahs();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSurahs() async {
     setState(() => _isLoading = true);
     try {
-      final resp = await ApiClient().dio.get('/admin/master/surahs');
+      final resp = await ApiClient().dio.get(ApiEndpoints.masterSurahs);
       if (resp.data['success'] == true) {
         setState(() {
           _surahs = (resp.data['data'] as List).cast<Map<String, dynamic>>();
@@ -40,15 +50,35 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
   Future<void> _syncSurahs() async {
     setState(() => _isSyncing = true);
     try {
-      final resp = await ApiClient().dio.get('/admin/master/surahs');
+      try {
+        final syncResp = await ApiClient().dio.post(ApiEndpoints.syncSurahsAdmin);
+        if (syncResp.data['success'] == true && syncResp.data['data'] != null) {
+          final list = (syncResp.data['data'] as List).cast<Map<String, dynamic>>();
+          setState(() => _surahs = list);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Sinkronisasi database berhasil! ${list.length} Surah tersimpan.'),
+                backgroundColor: AppColors.primary,
+              ),
+            );
+          }
+          return;
+        }
+      } catch (_) {
+        // Fallback to GET masterSurahs
+      }
+
+      final resp = await ApiClient().dio.get(ApiEndpoints.masterSurahs);
       if (resp.data['success'] == true) {
+        final list = (resp.data['data'] as List).cast<Map<String, dynamic>>();
         setState(() {
-          _surahs = (resp.data['data'] as List).cast<Map<String, dynamic>>();
+          _surahs = list;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Sinkronisasi berhasil! 114 Surah dimuat.'),
+            SnackBar(
+              content: Text('Sinkronisasi berhasil! ${list.length} Surah dimuat.'),
               backgroundColor: AppColors.primary,
             ),
           );
@@ -68,13 +98,38 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
     }
   }
 
+  List<Map<String, dynamic>> get _filteredSurahs {
+    return _surahs.where((s) {
+      final nomor = (s['nomor'] ?? s['number'] ?? '').toString();
+      final namaLatin = (s['nama_latin'] ?? s['name'] ?? '').toString().toLowerCase();
+      final namaInggris = (s['nama_inggris'] ?? s['meaning'] ?? '').toString().toLowerCase();
+      final namaArab = (s['nama_arab'] ?? s['name_arabic'] ?? '').toString();
+      final tempatTurun = (s['tempat_turun'] ?? s['revelation_type'] ?? '').toString().toLowerCase();
+      final isMeccan = tempatTurun == 'meccan' || tempatTurun == 'makkiyyah';
+
+      // Type filter
+      if (_selectedFilter == 'Makkiyyah' && !isMeccan) return false;
+      if (_selectedFilter == 'Madaniyyah' && isMeccan) return false;
+
+      // Search query
+      if (_searchQuery.trim().isEmpty) return true;
+      final q = _searchQuery.trim().toLowerCase();
+      return nomor == q ||
+          namaLatin.contains(q) ||
+          namaInggris.contains(q) ||
+          namaArab.contains(q);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredSurahs;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: Text(
-          'Daftar Surat',
+          'Daftar 114 Surat Al-Qur\'an',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [
@@ -93,23 +148,86 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
       ),
       body: Column(
         children: [
+          // Search box & Filters
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            color: Colors.white,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchCtrl,
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                  decoration: InputDecoration(
+                    hintText: 'Cari nama surat atau nomor (1-114)...',
+                    hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                    prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.muted),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: AppColors.muted),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.bg,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _filterChip('Semua', _surahs.length),
+                    const SizedBox(width: 8),
+                    _filterChip('Makkiyyah', _countByType('Makkiyyah')),
+                    const SizedBox(width: 8),
+                    _filterChip('Madaniyyah', _countByType('Madaniyyah')),
+                    const Spacer(),
+                    Text(
+                      '${filtered.length} Surat',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Info Banner
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.bluePale,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.blue, size: 20),
+                const Icon(Icons.info_outline, color: AppColors.blue, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Data diambil dari API Al-Quran Cloud (api.alquran.cloud). Tekan ikon sync untuk memperbarui.',
+                    'Data resmi 114 Surah Al-Qur\'an dari API Al-Quran Cloud (api.alquran.cloud).',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppColors.blue,
                     ),
                   ),
@@ -117,6 +235,8 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
               ],
             ),
           ),
+
+          // Surah List
           Expanded(
             child: _isLoading && _surahs.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -145,22 +265,76 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _surahs.length,
-                        itemBuilder: (ctx, i) {
-                          final s = _surahs[i];
-                          return _surahCard(s, i + 1);
-                        },
-                      ),
+                    : filtered.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.search_off, size: 48, color: AppColors.muted),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Surat "$_searchQuery" tidak ditemukan',
+                                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.muted),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            itemCount: filtered.length,
+                            itemBuilder: (ctx, i) {
+                              final s = filtered[i];
+                              return _surahCard(s, i + 1);
+                            },
+                          ),
           ),
         ],
       ),
     );
   }
 
+  int _countByType(String type) {
+    return _surahs.where((s) {
+      final tempat = (s['tempat_turun'] ?? s['revelation_type'] ?? '').toString().toLowerCase();
+      final isMeccan = tempat == 'meccan' || tempat == 'makkiyyah';
+      return type == 'Makkiyyah' ? isMeccan : !isMeccan;
+    }).length;
+  }
+
+  Widget _filterChip(String label, int count) {
+    final isSelected = _selectedFilter == label;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Text(
+          '$label ($count)',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? Colors.white : AppColors.dark,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _surahCard(Map<String, dynamic> s, int index) {
-    final isMeccan = s['revelation_type'] == 'Meccan';
+    final nomor = s['nomor'] ?? s['number'] ?? index;
+    final namaLatin = s['nama_latin'] ?? s['name'] ?? 'Surah';
+    final namaArab = s['nama_arab'] ?? s['name_arabic'] ?? '';
+    final namaInggris = s['nama_inggris'] ?? s['meaning'] ?? '-';
+    final jumlahAyat = s['jumlah_ayat'] ?? s['number_of_ayahs'] ?? 0;
+    final tempatTurun = (s['tempat_turun'] ?? s['revelation_type'] ?? 'Meccan').toString();
+    final isMeccan = tempatTurun.toLowerCase() == 'meccan' || tempatTurun.toLowerCase() == 'makkiyyah';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -172,15 +346,15 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: AppColors.primaryPale,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: Text(
-                '${s['number']}',
+                '$nomor',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -196,11 +370,14 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      s['name'] ?? '-',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Text(
+                        namaLatin,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -223,7 +400,7 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  s['meaning'] ?? '-',
+                  namaInggris,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.muted,
@@ -235,7 +412,7 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
                     const Icon(Icons.format_list_numbered, size: 14, color: AppColors.muted),
                     const SizedBox(width: 4),
                     Text(
-                      '${s['number_of_ayahs']} Ayat',
+                      '$jumlahAyat Ayat',
                       style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
                     ),
                   ],
@@ -243,10 +420,11 @@ class _DaftarSuratScreenState extends State<DaftarSuratScreen> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
-            s['name_arabic'] ?? '',
+            namaArab,
             style: GoogleFonts.amiri(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
             ),

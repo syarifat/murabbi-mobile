@@ -72,28 +72,21 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       debugPrint('Gagal memuat kelas binaan dari server: $e');
     }
 
-    // 2. Ambil data surah langsung dari API database MySQL (Juz 30 nomor 78 - 114)
+    // 2. Ambil data surah langsung dari API database MySQL (semua 114 surah)
     try {
       final surahRes = await ApiClient().dio.get(ApiEndpoints.surahs);
       final rawSurahs = (surahRes.data['data'] as List?) ?? [];
       
-      // Ambil hanya surah Juz 30 yang terdaftar di database MySQL
-      final juz30Surahs = rawSurahs.where((s) {
-        final nomor = (s['nomor'] ?? s['number']) as num?;
-        return nomor != null && nomor >= 78 && nomor <= 114;
-      }).toList();
-
-      if (juz30Surahs.isNotEmpty) {
-        surahs = juz30Surahs.map((s) {
-          final nomor = ((s['nomor'] ?? s['number']) as num).toInt();
-          // Di database MySQL murabbi, id: 1 adalah nomor 78 (An-Naba), id: 37 adalah nomor 114 (An-Nas)
-          final dbId = (s['id'] != null && (s['id'] as num) <= 37 && (s['id'] as num) >= 1)
-              ? (s['id'] as num).toInt()
-              : (nomor - 77);
+      if (rawSurahs.isNotEmpty) {
+        surahs = rawSurahs.map((s) {
+          final nomor = ((s['nomor'] ?? s['number'] ?? s['id']) as num).toInt();
+          final dbId = (s['id'] != null) ? (s['id'] as num).toInt() : nomor;
           return {
             ...s,
             'id': dbId,
             'nomor': nomor,
+            'nama_latin': s['nama_latin'] ?? s['name'] ?? 'Surah $nomor',
+            'jumlah_ayat': (s['jumlah_ayat'] ?? s['number_of_ayahs'] ?? 7) as int,
           };
         }).toList();
       }
@@ -265,7 +258,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   }
 
   void _selectSurah(dynamic surah) {
-    final sId = surah['id'] as int;
+    final sId = (surah['id'] as num).toInt();
     final nomor = surah['nomor'];
     final namaLatin = surah['nama_latin'] ?? '';
     setState(() {
@@ -505,175 +498,224 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (ctx, scrollCtrl) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Pilih Surah Al-Qur\'an',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (_completedSurahIds.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryPale,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        '${_completedSurahIds.length} Surah Tuntas',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Surah yang telah tuntas dihafal santri dinonaktifkan (mati).',
-                style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
-              ),
-              const Divider(height: 20),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollCtrl,
-                  itemCount: _surahList.length,
-                  itemBuilder: (context, i) {
-                    final surah = _surahList[i];
-                    final surahId = surah['id'] as int;
-                    final isCompleted = _completedSurahIds.contains(surahId);
-                    final isSelected = _selectedSurahId == surahId;
+      builder: (ctx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filteredSurahs = _surahList.where((s) {
+              if (searchQuery.trim().isEmpty) return true;
+              final q = searchQuery.trim().toLowerCase();
+              final nomor = (s['nomor'] ?? '').toString();
+              final namaLatin = (s['nama_latin'] ?? '').toString().toLowerCase();
+              final namaArab = (s['nama_arab'] ?? '').toString();
+              return nomor == q || namaLatin.contains(q) || namaArab.contains(q);
+            }).toList();
 
-                    return Opacity(
-                      opacity: isCompleted ? 0.45 : 1.0,
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 4),
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? AppColors.border.withValues(alpha: 0.2)
-                              : (isSelected
-                                  ? AppColors.primaryPale
-                                  : Colors.transparent),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary.withValues(alpha: 0.3)
-                                : Colors.transparent,
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              minChildSize: 0.4,
+              maxChildSize: 0.92,
+              expand: false,
+              builder: (ctx, scrollCtrl) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pilih Surah Al-Qur\'an',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isCompleted
-                                ? AppColors.border
-                                : AppColors.primaryPale,
-                            radius: 14,
-                            child: isCompleted
-                                ? const Icon(
-                                    Icons.check,
-                                    size: 14,
-                                    color: AppColors.muted,
-                                  )
-                                : Text(
-                                    '${surah['nomor']}',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : AppColors.dark,
-                                    ),
-                                  ),
-                          ),
-                          title: Text(
-                            '${surah['nomor']}. ${surah['nama_latin'] ?? ''}',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isCompleted
-                                  ? AppColors.muted
-                                  : AppColors.dark,
-                              decoration: isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                        if (_completedSurahIds.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPale,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              '${_completedSurahIds.length} Surah Tuntas',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
-                          subtitle: Text(
-                            isCompleted
-                                ? 'Sudah Tuntas Diselesaikan Santri'
-                                : ((_lastAyatBySurah[surahId] ?? 0) > 0
-                                    ? 'Hafalan terakhir: Ayat 1-${_lastAyatBySurah[surahId]} · ${surah['jumlah_ayat']} Ayat'
-                                    : '${surah['jumlah_ayat']} Ayat · ${surah['tempat_turun'] ?? ""}'),
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: isCompleted
-                                  ? AppColors.muted
-                                  : ((_lastAyatBySurah[surahId] ?? 0) > 0
-                                      ? AppColors.primary
-                                      : AppColors.sub),
-                            ),
-                          ),
-                          trailing: isCompleted
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.border,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    'Tuntas ✓',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                )
-                              : (isSelected
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: AppColors.primary,
-                                    )
-                                  : null),
-                          onTap: isCompleted
-                              ? null
-                              : () {
-                                  _selectSurah(surah);
-                                  Navigator.pop(ctx);
-                                },
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Surah yang telah tuntas dihafal santri dinonaktifkan (mati).',
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      onChanged: (val) => setModalState(() => searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Cari nama surah atau nomor (1-114)...',
+                        hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
+                        prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.bg,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: AppColors.primary),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 16),
+                    Expanded(
+                      child: filteredSurahs.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Surah "$searchQuery" tidak ditemukan',
+                                style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollCtrl,
+                              itemCount: filteredSurahs.length,
+                              itemBuilder: (context, i) {
+                                final surah = filteredSurahs[i];
+                                final surahId = (surah['id'] as num).toInt();
+                                final isCompleted = _completedSurahIds.contains(surahId);
+                                final isSelected = _selectedSurahId == surahId;
+
+                                return Opacity(
+                                  opacity: isCompleted ? 0.45 : 1.0,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 4),
+                                    decoration: BoxDecoration(
+                                      color: isCompleted
+                                          ? AppColors.border.withValues(alpha: 0.2)
+                                          : (isSelected
+                                              ? AppColors.primaryPale
+                                              : Colors.transparent),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppColors.primary.withValues(alpha: 0.3)
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: isCompleted
+                                            ? AppColors.border
+                                            : AppColors.primaryPale,
+                                        radius: 14,
+                                        child: isCompleted
+                                            ? const Icon(
+                                                Icons.check,
+                                                size: 14,
+                                                color: AppColors.muted,
+                                              )
+                                            : Text(
+                                                '${surah['nomor']}',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: isSelected
+                                                      ? AppColors.primary
+                                                      : AppColors.dark,
+                                                ),
+                                              ),
+                                      ),
+                                      title: Text(
+                                        '${surah['nomor']}. ${surah['nama_latin'] ?? ''}',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: isCompleted
+                                              ? AppColors.muted
+                                              : AppColors.dark,
+                                          decoration: isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        isCompleted
+                                            ? 'Sudah Tuntas Diselesaikan Santri'
+                                            : ((_lastAyatBySurah[surahId] ?? 0) > 0
+                                                ? 'Hafalan terakhir: Ayat 1-${_lastAyatBySurah[surahId]} · ${surah['jumlah_ayat']} Ayat'
+                                                : '${surah['jumlah_ayat']} Ayat · ${surah['tempat_turun'] ?? ""}'),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          color: isCompleted
+                                              ? AppColors.muted
+                                              : ((_lastAyatBySurah[surahId] ?? 0) > 0
+                                                  ? AppColors.primary
+                                                  : AppColors.sub),
+                                        ),
+                                      ),
+                                      trailing: isCompleted
+                                          ? Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.border,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                'Tuntas ✓',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.muted,
+                                                ),
+                                              ),
+                                            )
+                                          : (isSelected
+                                              ? const Icon(
+                                                  Icons.check_circle,
+                                                  color: AppColors.primary,
+                                                )
+                                              : null),
+                                      onTap: isCompleted
+                                          ? null
+                                          : () {
+                                              _selectSurah(surah);
+                                              Navigator.pop(ctx);
+                                            },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
