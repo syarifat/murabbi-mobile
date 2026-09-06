@@ -49,12 +49,12 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   int get _currentMaxAyat {
     if (_selectedSurahId == null || _surahList.isEmpty) return 286;
-    final found = _surahList.firstWhere(
-      (s) => s['id'] == _selectedSurahId,
-      orElse: () => null,
-    );
-    if (found == null) return 286;
-    return (found['jumlah_ayat'] as num?)?.toInt() ?? 286;
+    for (final s in _surahList) {
+      if (s is Map && s['id'] == _selectedSurahId) {
+        return (s['jumlah_ayat'] as num?)?.toInt() ?? 286;
+      }
+    }
+    return 286;
   }
 
   Future<void> _fetchMasterData() async {
@@ -178,13 +178,16 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _completedSurahIds.contains(_selectedSurahId);
 
     if (isCurrentCompleted || _selectedSurahId == null) {
-      final nextSurah = _surahList.firstWhere(
-        (s) {
+      dynamic nextSurah;
+      for (final s in _surahList) {
+        if (s is Map) {
           final id = s['id'] as int?;
-          return id != null && !_completedSurahIds.contains(id);
-        },
-        orElse: () => null,
-      );
+          if (id != null && !_completedSurahIds.contains(id)) {
+            nextSurah = s;
+            break;
+          }
+        }
+      }
 
       if (nextSurah != null) {
         _selectSurah(nextSurah);
@@ -270,11 +273,14 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   }
 
   void _fetchSantriByKelas(int kelasId) {
-    final kelas = _kelasList.firstWhere(
-      (k) => k['id'] == kelasId,
-      orElse: () => {},
-    );
-    final santris = (kelas['santris'] as List?) ?? [];
+    Map<String, dynamic>? kelas;
+    for (final k in _kelasList) {
+      if (k is Map && k['id'] == kelasId) {
+        kelas = Map<String, dynamic>.from(k);
+        break;
+      }
+    }
+    final santris = (kelas?['santris'] as List?) ?? [];
     setState(() {
       _santriList = santris;
       if (santris.isNotEmpty) {
