@@ -65,17 +65,21 @@ class AppButton extends StatelessWidget {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
           Icon(icon, size: 18, color: color),
           const SizedBox(width: 8),
         ],
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: color,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

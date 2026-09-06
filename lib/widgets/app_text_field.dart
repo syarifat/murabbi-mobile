@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_colors.dart';
 
 class AppTextField extends StatefulWidget {
@@ -14,6 +15,9 @@ class AppTextField extends StatefulWidget {
   final bool isPassword;
   final int maxLines;
   final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
+  final String? helperText;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -28,6 +32,9 @@ class AppTextField extends StatefulWidget {
     this.isPassword = false,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
+    this.onChanged,
+    this.helperText,
+    this.inputFormatters,
   });
 
   @override
@@ -62,6 +69,8 @@ class _AppTextFieldState extends State<AppTextField> {
               obscureText: widget.isPassword ? _obscured : false,
               maxLines: widget.isPassword ? 1 : widget.maxLines,
               keyboardType: widget.keyboardType,
+              onChanged: widget.onChanged,
+              inputFormatters: widget.inputFormatters,
               style: GoogleFonts.inter(
                 color: AppColors.dark,
                 fontSize: 13,
@@ -69,6 +78,12 @@ class _AppTextFieldState extends State<AppTextField> {
               ),
               decoration: InputDecoration(
                 hintText: widget.hint,
+                helperText: widget.helperText,
+                helperStyle: GoogleFonts.inter(
+                  color: AppColors.muted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
                 prefixIcon: widget.leadIcon != null
                     ? Icon(widget.leadIcon, size: 18, color: AppColors.sub)
                     : null,

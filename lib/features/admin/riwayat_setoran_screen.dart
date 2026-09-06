@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
-import '../../widgets/app_badge.dart';
 
 class RiwayatSetoranScreen extends StatefulWidget {
   const RiwayatSetoranScreen({super.key});

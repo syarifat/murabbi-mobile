@@ -29,6 +29,8 @@ class ApiEndpoints {
   static String get surahs => '$baseUrl/guru/master/surahs';
   static String get guruSantris => '$baseUrl/guru/santris';
   static String get setorans => '$baseUrl/guru/setorans';
+  static String santriCompletedSurahs(int santriId) =>
+      '$baseUrl/guru/santris/$santriId/completed-surahs';
 
   // Ortu
   static String get ortuDashboard => '$baseUrl/ortu/dashboard';
