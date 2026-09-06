@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/api_endpoints.dart';
+import '../../core/data/mock_database.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_button.dart';
@@ -58,46 +59,62 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   }
 
   Future<void> _fetchMasterData() async {
+    List<dynamic> kelasBinaan = [];
+    List<dynamic> surahs = [];
+
+    // 1. Ambil data kelas binaan guru dari API
     try {
-      final responses = await Future.wait([
-        ApiClient().dio.get(ApiEndpoints.guruDashboard),
-        ApiClient().dio.get(ApiEndpoints.surahs),
-      ]);
-      if (!mounted) return;
+      final dashRes = await ApiClient().dio.get(ApiEndpoints.guruDashboard);
+      final dashboardData = dashRes.data['data'] as Map<String, dynamic>?;
+      kelasBinaan = (dashboardData?['kelas_binaan'] as List?) ?? [];
+    } catch (_) {
+      // Fallback ke data kelas lokal jika server tidak merespons
+      kelasBinaan = MockDatabase().classes.map((c) => {
+        'id': c['id'],
+        'nama_kelas': c['nama_kelas'],
+        'santris': MockDatabase().santris.where((s) => s['kelas_id'] == c['id']).toList(),
+      }).toList();
+    }
 
-      final dashboardData = responses[0].data['data'] as Map<String, dynamic>?;
-      final kelasBinaan = (dashboardData?['kelas_binaan'] as List?) ?? [];
-
-      setState(() {
-        _kelasList = kelasBinaan;
-        _surahList = (responses[1].data['data'] as List?) ?? [];
-
-        if (_kelasList.isNotEmpty) {
-          _selectedKelasId = _kelasList[0]['id'];
-          _selectedKelasName = _kelasList[0]['nama_kelas'];
-          final santris = (_kelasList[0]['santris'] as List?) ?? [];
-          _santriList = santris;
-          if (_santriList.isNotEmpty) {
-            _selectedSantriId = _santriList[0]['id'];
-            _selectedSantriName = _santriList[0]['nama_lengkap'];
-          }
-        }
-        if (_surahList.isNotEmpty) {
-          _selectedSurahId =
-              _surahList[0]['id'] as int? ?? _surahList[0]['nomor'] as int?;
-          _selectedSurahName = _surahList[0]['nama_latin'] ?? 'Surah';
-        }
-      });
-
-      if (_selectedSantriId != null) {
-        _fetchCompletedSurahsForSantri(_selectedSantriId);
+    // 2. Ambil data surah (dengan auto-fallback ke master 37 Surah Juz 30)
+    try {
+      final surahRes = await ApiClient().dio.get(ApiEndpoints.surahs);
+      final rawSurahs = (surahRes.data['data'] as List?) ?? [];
+      if (rawSurahs.isNotEmpty) {
+        surahs = rawSurahs;
+      } else {
+        surahs = MockDatabase().surahs;
       }
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal memuat data master.')),
-        );
+      // Fallback aman ke katalog 37 surah Al-Qur'an Juz 30
+      surahs = MockDatabase().surahs;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _kelasList = kelasBinaan;
+      _surahList = surahs;
+
+      if (_kelasList.isNotEmpty) {
+        _selectedKelasId = _kelasList[0]['id'];
+        _selectedKelasName = _kelasList[0]['nama_kelas'] ?? 'Pilih Kelas';
+        final santris = (_kelasList[0]['santris'] as List?) ?? [];
+        _santriList = santris;
+        if (_santriList.isNotEmpty) {
+          _selectedSantriId = _santriList[0]['id'];
+          _selectedSantriName = _santriList[0]['nama_lengkap'] ?? 'Pilih Santri';
+        }
       }
+      if (_surahList.isNotEmpty) {
+        _selectedSurahId =
+            _surahList[0]['id'] as int? ?? _surahList[0]['nomor'] as int?;
+        _selectedSurahName = _surahList[0]['nama_latin'] ?? 'Surah';
+      }
+    });
+
+    if (_selectedSantriId != null) {
+      _fetchCompletedSurahsForSantri(_selectedSantriId);
     }
   }
 
