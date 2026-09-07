@@ -17,6 +17,7 @@ class ProfilGuruScreen extends StatefulWidget {
 class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
   Map<String, dynamic>? _guruData;
   List<dynamic> _kelasBinaan = [];
+  Map<int, int> _suratSelesaiBySantri = {};
   int _santriCount = 0;
   bool _isLoading = true;
 
@@ -30,10 +31,42 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     try {
       final response = await ApiClient().dio.get(ApiEndpoints.guruDashboard);
       final data = response.data['data'] as Map<String, dynamic>;
+
+      Map<int, int> fallbackSuratSelesai = {};
+      try {
+        final setoransRes = await ApiClient().dio.get(
+          ApiEndpoints.setorans,
+          queryParameters: {'per_page': 200},
+        );
+        final sData = setoransRes.data['data'];
+        final sList = sData is Map<String, dynamic>
+            ? (sData['data'] as List? ?? [])
+            : (sData as List? ?? []);
+
+        final Map<int, Set<int>> santriCompletedSurahs = {};
+        for (final item in sList) {
+          if (item is Map && item['status'] != 'mengulang') {
+            final santriId = (item['santri_id'] as num?)?.toInt();
+            final surahId = (item['surah_id'] as num?)?.toInt();
+            final ayatSelesai = (item['ayat_selesai'] as num?)?.toInt() ?? 0;
+            final surahJmlAyat = (item['surah']?['jumlah_ayat'] as num?)?.toInt();
+
+            if (santriId != null && surahId != null) {
+              if (surahJmlAyat != null && ayatSelesai >= surahJmlAyat) {
+                santriCompletedSurahs.putIfAbsent(santriId, () => {}).add(surahId);
+              }
+            }
+          }
+        }
+        fallbackSuratSelesai = santriCompletedSurahs.map((k, v) => MapEntry(k, v.length));
+      } catch (_) {}
+
+      if (!mounted) return;
       setState(() {
         _guruData = data['guru'] as Map<String, dynamic>?;
         _kelasBinaan = (data['kelas_binaan'] as List?) ?? [];
         _santriCount = data['stats']?['santri_terampu'] as int? ?? 0;
+        _suratSelesaiBySantri = fallbackSuratSelesai;
         _isLoading = false;
       });
     } catch (e) {
@@ -143,20 +176,28 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                                 color: AppColors.muted,
                               ),
                             ),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPale,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${s['progress_pct'] ?? 0}%',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                            trailing: Builder(
+                              builder: (context) {
+                                final sId = (s['id'] as num?)?.toInt();
+                                final suratSelesai = (s['surat_selesai'] as num?)?.toInt() ??
+                                    (sId != null ? _suratSelesaiBySantri[sId] : null) ??
+                                    0;
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryPale,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '$suratSelesai Surat Selesai',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },
