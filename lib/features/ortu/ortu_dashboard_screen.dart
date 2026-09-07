@@ -17,6 +17,9 @@ class OrtuDashboardScreen extends StatefulWidget {
 
 class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
   Map<String, dynamic> _data = {};
+  int _selectedChildIndex = 0;
+  Map<int, int> _suratSelesaiBySantri = {};
+  Map<int, Map<String, dynamic>?> _latestSetoranBySantri = {};
   bool _isLoading = true;
 
   @override
@@ -29,9 +32,45 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await ApiClient().dio.get(ApiEndpoints.ortuDashboard);
+      final d = response.data['data'] as Map<String, dynamic>? ?? {};
+      final santris = (d['santris'] as List?) ?? [];
+
+      Map<int, int> sMap = {};
+      Map<int, Map<String, dynamic>?> lMap = {};
+
+      for (final s in santris) {
+        if (s is Map && s['id'] != null) {
+          final sId = (s['id'] as num).toInt();
+          // Coba ambil timeline untuk riil surat tuntas & setoran terbaru
+          try {
+            final tRes = await ApiClient().dio.get(ApiEndpoints.santriTimeline(sId));
+            final tList = (tRes.data['data'] as List?) ?? [];
+
+            if (tList.isNotEmpty && tList.first is Map) {
+              lMap[sId] = Map<String, dynamic>.from(tList.first as Map);
+            }
+
+            final Set<int> tuntasSurahs = {};
+            for (final item in tList) {
+              if (item is Map && item['status'] != 'mengulang') {
+                final surahId = (item['surah_id'] as num?)?.toInt();
+                final aSelesai = (item['ayat_selesai'] as num?)?.toInt() ?? 0;
+                final jmlAyat = (item['surah']?['jumlah_ayat'] as num?)?.toInt() ?? 999;
+                if (surahId != null && aSelesai >= jmlAyat) {
+                  tuntasSurahs.add(surahId);
+                }
+              }
+            }
+            sMap[sId] = tuntasSurahs.length;
+          } catch (_) {}
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _data = response.data['data'] as Map<String, dynamic>? ?? {};
+          _data = d;
+          _suratSelesaiBySantri = sMap;
+          _latestSetoranBySantri = lMap;
           _isLoading = false;
         });
       }
@@ -47,7 +86,24 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
     final wali = _data['wali']?['name'] ?? 'Wali Murid';
     final santris = (_data['santris'] as List?) ?? [];
     final count = santris.length;
-    final capaian = _data['capaian_terbaru'] as Map<String, dynamic>?;
+
+    final activeSantri = santris.isNotEmpty && _selectedChildIndex < santris.length
+        ? santris[_selectedChildIndex]
+        : (santris.isNotEmpty ? santris.first : null);
+
+    final activeSantriId = activeSantri?['id'] != null ? (activeSantri!['id'] as num).toInt() : null;
+    final capaian = activeSantriId != null
+        ? (_latestSetoranBySantri[activeSantriId] ?? _data['capaian_terbaru'] as Map<String, dynamic>?)
+        : (_data['capaian_terbaru'] as Map<String, dynamic>?);
+
+    final suratSelesaiCount = activeSantriId != null
+        ? (_suratSelesaiBySantri[activeSantriId] ?? (activeSantri?['surat_selesai'] as num?)?.toInt() ?? 0)
+        : 0;
+
+    final targetJuz = activeSantri?['target_juz'] ?? 'Juz 30';
+    final totalTargetSurah = targetJuz == 'Juz 30' ? 37 : 114;
+    final progressVal = (suratSelesaiCount / totalTargetSurah).clamp(0.0, 1.0);
+    final progressPercent = (progressVal * 100).round();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -110,7 +166,62 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 14),
+
+                      // Child Switcher jika santri > 1
+                      if (santris.length > 1) ...[
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(santris.length, (index) {
+                              final s = santris[index];
+                              final isSel = _selectedChildIndex == index;
+                              final name = s['nama_lengkap'] ?? 'Anak';
+                              final kelas = s['kelas']?['nama_kelas'] ?? '';
+                              final label = kelas.isNotEmpty ? '$name ($kelas)' : name;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: InkWell(
+                                  onTap: () => setState(() => _selectedChildIndex = index),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: isSel ? AppColors.primary : AppColors.surface,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isSel ? AppColors.primary : AppColors.border,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          isSel ? Icons.person : Icons.person_outline,
+                                          size: 14,
+                                          color: isSel ? Colors.white : AppColors.muted,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          label,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                                            color: isSel ? Colors.white : AppColors.muted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+
+                      // Capaian Terbaru Card
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(18),
@@ -122,18 +233,18 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              capaian != null && capaian['santri'] != null
-                                  ? 'Capaian ${capaian['santri']['nama_lengkap']}'
+                              activeSantri != null
+                                  ? 'Capaian Terbaru · ${activeSantri['nama_lengkap']}'
                                   : 'Capaian Terbaru',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: Colors.white,
+                                color: Colors.white70,
                               ),
                             ),
                             const SizedBox(height: 10),
                             Text(
                               capaian != null
-                                  ? '${capaian['surah']?['nama_latin'] ?? '-'} ${capaian['ayat_mulai']}-${capaian['ayat_selesai']}  ·  ${capaian['status']?.toString().toUpperCase() ?? '-'}'
+                                  ? '${capaian['surah']?['nama_latin'] ?? '-'} Ayat ${capaian['ayat_mulai']}-${capaian['ayat_selesai']}  ·  ${capaian['status']?.toString().toUpperCase() ?? '-'}'
                                   : 'Belum Ada Setoran',
                               style: GoogleFonts.inter(
                                 fontSize: 16,
@@ -150,7 +261,7 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                                 ),
                               ),
                               child: Text(
-                                'Lihat Detail ›',
+                                'Lihat Detail Riwayat ›',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -162,6 +273,8 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
+
+                      // Target Tahfidz Santri Card (Riil)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -178,7 +291,9 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    'Target Tahfidz Santri',
+                                    activeSantri != null
+                                        ? 'Target Hafalan · ${activeSantri['nama_lengkap']}'
+                                        : 'Target Tahfidz Santri',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
@@ -188,36 +303,45 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  count > 0
-                                      ? '${santris.first['progress_pct'] ?? 0}% Tuntas'
-                                      : '0% Tuntas',
+                                  '$suratSelesaiCount Surat Selesai ($progressPercent%)',
                                   style: GoogleFonts.inter(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.primary,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
-                                value: count > 0
-                                    ? ((santris.first['progress_pct'] ?? 0) / 100.0)
-                                    : 0.0,
+                                value: progressVal,
                                 minHeight: 8,
+                                backgroundColor: AppColors.border,
+                                color: AppColors.primary,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              count > 0
-                                  ? 'Target: ${santris.first['target_juz'] ?? "Juz 30"}'
-                                  : 'Belum Ada Target',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: AppColors.muted,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Target: $targetJuz ($totalTargetSurah Surat)',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                                Text(
+                                  '${totalTargetSurah - suratSelesaiCount} Surat Tersisa',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

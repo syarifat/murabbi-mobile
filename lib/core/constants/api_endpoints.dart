@@ -36,6 +36,8 @@ class ApiEndpoints {
   static String get ortuDashboard => '$baseUrl/ortu/dashboard';
   static String santriTimeline(int santriId) =>
       '$baseUrl/ortu/santri/$santriId/timeline';
+  static String santriRekap(int santriId) =>
+      '$baseUrl/ortu/santri/$santriId/rekap';
 
   // Admin
   static String get adminDashboard => '$baseUrl/admin/dashboard';

@@ -6,6 +6,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
 import '../auth/welcome_screen.dart';
+import 'rekap_perkembangan_screen.dart';
 
 class ProfilOrtuScreen extends StatefulWidget {
   const ProfilOrtuScreen({super.key});
@@ -232,8 +233,14 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                     // Laporan
                     _buildProfileItem(
                       Icons.picture_as_pdf,
-                      'Laporan Mutaba\'ah PDF',
-                      'Unduh Rapor Bulanan',
+                      'Laporan Mutaba\'ah Hafalan',
+                      'Buka Grafik & Capaian Santri',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RekapPerkembanganScreen(),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
 
@@ -241,7 +248,60 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                     _buildProfileItem(
                       Icons.notifications_active_outlined,
                       'Pengaturan Notifikasi',
-                      'Laporan Harian via WA Aktif',
+                      'Laporan Harian & Pembaruan Sistem',
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: Text(
+                              'Pengaturan Notifikasi',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(
+                                    Icons.phone_android,
+                                    color: AppColors.primary,
+                                  ),
+                                  title: Text(
+                                    'Notifikasi WhatsApp',
+                                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(
+                                    'Kirim laporan setoran harian ke nomor terdaftar',
+                                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                                  ),
+                                  trailing: const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: Text(
+                                  'Tutup',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -282,44 +342,53 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
     );
   }
 
-  Widget _buildProfileItem(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.gold),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.dark,
+  Widget _buildProfileItem(
+    IconData icon,
+    String title,
+    String subtitle, {
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.gold),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.dark,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right, size: 18, color: AppColors.sub),
-        ],
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.sub),
+          ],
+        ),
       ),
     );
   }

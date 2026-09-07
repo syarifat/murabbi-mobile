@@ -14,22 +14,158 @@ class RekapPerkembanganScreen extends StatefulWidget {
 }
 
 class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
-  Map<String, dynamic> _data = {};
+  List<dynamic> _santris = [];
+  int _selectedChildIndex = 0;
   bool _isLoading = true;
+
+  // Real data untuk santri terpilih
+  Map<String, dynamic> _summary = {};
+  List<Map<String, dynamic>> _monthlyStats = [];
+  List<Map<String, dynamic>> _surahs = [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadDashboardAndRekap();
   }
 
-  Future<void> _load() async {
+  Future<void> _loadDashboardAndRekap() async {
     setState(() => _isLoading = true);
     try {
       final response = await ApiClient().dio.get(ApiEndpoints.ortuDashboard);
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      final santriList = (data['santris'] as List?) ?? [];
+
+      if (!mounted) return;
+      setState(() {
+        _santris = santriList;
+      });
+
+      if (_santris.isNotEmpty) {
+        final activeSantriId = _santris[_selectedChildIndex]['id'];
+        await _loadRekapForSantri(activeSantriId);
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadRekapForSantri(dynamic santriId) async {
+    final sId = santriId is int ? santriId : int.parse(santriId.toString());
+
+    // 1. Coba ambil dari endpoint rekap
+    try {
+      final res = await ApiClient().dio.get(ApiEndpoints.santriRekap(sId));
+      final rData = res.data['data'] as Map<String, dynamic>;
       if (mounted) {
         setState(() {
-          _data = response.data['data'] as Map<String, dynamic>? ?? {};
+          _summary = (rData['summary'] as Map<String, dynamic>?) ?? {};
+          _monthlyStats = ((rData['monthly_stats'] as List?) ?? [])
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+          _surahs = ((rData['surahs'] as List?) ?? [])
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+          _isLoading = false;
+        });
+        return;
+      }
+    } catch (_) {
+      // Fallback ke timeline jika endpoint rekap belum aktif di remote
+    }
+
+    // 2. Fallback: Hitung riil dari santriTimeline
+    try {
+      final tRes = await ApiClient().dio.get(ApiEndpoints.santriTimeline(sId));
+      final tList = (tRes.data['data'] as List?) ?? [];
+
+      // Hitung 6 bulan terakhir nyata
+      final now = DateTime.now();
+      final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      final List<Map<String, dynamic>> computedMonthly = [];
+
+      for (int i = 5; i >= 0; i--) {
+        final mDate = DateTime(now.year, now.month - i, 1);
+        final mLabel = monthNames[mDate.month - 1];
+        int count = 0;
+
+        for (final item in tList) {
+          if (item is Map && item['waktu_setor'] != null) {
+            try {
+              final w = DateTime.parse(item['waktu_setor'].toString());
+              if (w.year == mDate.year && w.month == mDate.month) {
+                count++;
+              }
+            } catch (_) {}
+          }
+        }
+        computedMonthly.add({
+          'month': mLabel,
+          'count': count,
+        });
+      }
+
+      // Hitung capaian per surah riil
+      final Map<int, Map<String, dynamic>> surahMap = {};
+      int totalSetoran = 0;
+
+      for (final item in tList) {
+        if (item is Map) {
+          totalSetoran++;
+          final surahObj = item['surah'] as Map<String, dynamic>?;
+          if (surahObj == null) continue;
+
+          final sSurahId = (surahObj['id'] as num?)?.toInt() ?? 0;
+          final nomor = (surahObj['nomor'] as num?)?.toInt() ?? sSurahId;
+          final namaLatin = surahObj['nama_latin'] ?? 'Surah';
+          final jumlahAyat = (surahObj['jumlah_ayat'] as num?)?.toInt() ?? 0;
+          final ayatSelesai = (item['ayat_selesai'] as num?)?.toInt() ?? 0;
+          final status = item['status']?.toString();
+
+          if (status != 'mengulang') {
+            final prevMax = (surahMap[sSurahId]?['ayat_hafal'] as int?) ?? 0;
+            final currentMax = ayatSelesai > prevMax ? ayatSelesai : prevMax;
+            final isTuntas = jumlahAyat > 0 && currentMax >= jumlahAyat;
+
+            surahMap[sSurahId] = {
+              'surah_id': sSurahId,
+              'nomor': nomor,
+              'nama_latin': namaLatin,
+              'jumlah_ayat': jumlahAyat,
+              'ayat_hafal': currentMax,
+              'is_tuntas': isTuntas,
+              'status_label': isTuntas ? 'TUNTAS' : 'PROSES ($currentMax/$jumlahAyat)',
+            };
+          }
+        }
+      }
+
+      final computedSurahs = surahMap.values.toList();
+      computedSurahs.sort((a, b) => ((a['nomor'] as int?) ?? 0).compareTo((b['nomor'] as int?) ?? 0));
+
+      final tuntasCount = computedSurahs.where((s) => s['is_tuntas'] == true).length;
+      final totalAyatHafal = computedSurahs.fold<int>(0, (sum, item) => sum + ((item['ayat_hafal'] as int?) ?? 0));
+
+      final activeSantri = _santris.isNotEmpty && _selectedChildIndex < _santris.length
+          ? _santris[_selectedChildIndex]
+          : null;
+      final targetJuz = activeSantri?['target_juz'] ?? 'Juz 30';
+      final targetAyat = targetJuz == 'Juz 30' ? 564 : 6236;
+      final progressPct = ((totalAyatHafal / targetAyat) * 100).clamp(0, 100).round();
+
+      if (mounted) {
+        setState(() {
+          _summary = {
+            'total_setoran': totalSetoran,
+            'surat_selesai': tuntasCount,
+            'total_ayat': totalAyatHafal,
+            'progress_pct': progressPct,
+            'target_juz': targetJuz,
+          };
+          _monthlyStats = computedMonthly;
+          _surahs = computedSurahs;
           _isLoading = false;
         });
       }
@@ -38,13 +174,32 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
     }
   }
 
+  void _onSelectChild(int index) {
+    if (index != _selectedChildIndex && index < _santris.length) {
+      setState(() {
+        _selectedChildIndex = index;
+        _isLoading = true;
+      });
+      _loadRekapForSantri(_santris[index]['id']);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final santris = (_data['santris'] as List?) ?? [];
-    final firstSantri = santris.isNotEmpty ? santris.first : null;
-    final progressPct = firstSantri != null
-        ? (firstSantri['progress_pct'] ?? 0)
-        : 0;
+    final activeSantri = _santris.isNotEmpty && _selectedChildIndex < _santris.length
+        ? _santris[_selectedChildIndex]
+        : null;
+    final targetJuz = _summary['target_juz'] ?? activeSantri?['target_juz'] ?? 'Juz 30';
+    final totalSetoran = _summary['total_setoran'] ?? 0;
+    final suratSelesai = _summary['surat_selesai'] ?? 0;
+    final totalAyat = _summary['total_ayat'] ?? 0;
+
+    // Hitung max count untuk scaling bar chart
+    int maxMonthlyCount = 1;
+    for (final m in _monthlyStats) {
+      final c = (m['count'] as num?)?.toInt() ?? 0;
+      if (c > maxMonthlyCount) maxMonthlyCount = c;
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -53,10 +208,10 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
           'Rekap Perkembangan',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: AppBadge(label: 'Juz 30', variant: BadgeVariant.neutral),
+            padding: const EdgeInsets.only(right: 16),
+            child: AppBadge(label: targetJuz, variant: BadgeVariant.neutral),
           ),
         ],
       ),
@@ -64,111 +219,257 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildStatCard(
-                        'Total Santri',
-                        '${santris.length}',
-                        Icons.menu_book,
-                        AppColors.primary,
-                        AppColors.primaryPale,
+          : RefreshIndicator(
+              onRefresh: () async {
+                if (_santris.isNotEmpty) {
+                  await _loadRekapForSantri(_santris[_selectedChildIndex]['id']);
+                } else {
+                  await _loadDashboardAndRekap();
+                }
+              },
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Child Selector (jika santri > 1)
+                    if (_santris.length > 1) ...[
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(_santris.length, (index) {
+                            final s = _santris[index];
+                            final name = s['nama_lengkap'] ?? 'Anak';
+                            final kelas = s['kelas']?['nama_kelas'] ?? '';
+                            final label = kelas.isNotEmpty ? '$name ($kelas)' : name;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: _buildChildPill(
+                                index,
+                                label,
+                                index == _selectedChildIndex
+                                    ? Icons.person
+                                    : Icons.person_outline,
+                              ),
+                            );
+                          }),
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      _buildStatCard(
-                        'Capaian',
-                        '$progressPct%',
-                        Icons.military_tech_outlined,
-                        AppColors.goldLight,
-                        AppColors.goldPale,
-                      ),
+                      const SizedBox(height: 14),
                     ],
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.border),
+
+                    // Stat Cards (Data Riil)
+                    Row(
+                      children: [
+                        _buildStatCard(
+                          'Total Setoran',
+                          '$totalSetoran Kali',
+                          Icons.menu_book,
+                          AppColors.primary,
+                          AppColors.primaryPale,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildStatCard(
+                          'Surat Selesai',
+                          '$suratSelesai Surat',
+                          Icons.check_circle_outline,
+                          const Color(0xFF059669),
+                          const Color(0xFFD1FAE5),
+                        ),
+                      ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _buildStatCard(
+                          'Ayat Dihafal',
+                          '$totalAyat Ayat',
+                          Icons.military_tech_outlined,
+                          AppColors.goldLight,
+                          AppColors.goldPale,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildStatCard(
+                          'Target Hafalan',
+                          targetJuz,
+                          Icons.flag_outlined,
+                          AppColors.primaryMid,
+                          AppColors.primaryPale,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Real Monthly Activity Bar Chart
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Aktivitas Setoran 6 Bulan Terakhir',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                'Riil Data',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            height: 104,
+                            child: _monthlyStats.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'Belum ada data aktivitas bulanan.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: _monthlyStats.map((m) {
+                                      final count = (m['count'] as num?)?.toInt() ?? 0;
+                                      final month = m['month']?.toString() ?? '-';
+                                      final double barHeight = count > 0
+                                          ? (count / maxMonthlyCount * 60.0).clamp(14.0, 60.0)
+                                          : 4.0;
+                                      final color = count > 0 ? AppColors.primary : AppColors.border;
+
+                                      return _buildBar(month, count, barHeight, color);
+                                    }).toList(),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Real Capaian Surah
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Progres Hafalan Per Bulan',
+                          'Status Capaian Surah',
                           style: GoogleFonts.inter(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 96,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              _buildBar('Jul', 48, AppColors.primaryMid),
-                              _buildBar('Agu', 68, AppColors.primaryMid),
-                              _buildBar(
-                                'Sep',
-                                progressPct.toDouble().clamp(10, 90),
-                                AppColors.primary,
-                              ),
-                              _buildBar('Okt', 28, AppColors.border),
-                              _buildBar('Nov', 18, AppColors.border),
-                              _buildBar('Des', 10, AppColors.border),
-                            ],
+                        Text(
+                          '${_surahs.length} Surah Disetor',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Status Capaian Surah',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildSurahRow(
-                    'An-Naba\' (78)',
-                    '40 Ayat',
-                    'TUNTAS',
-                    BadgeVariant.success,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildSurahRow(
-                    'An-Nazi\'at (79)',
-                    '46 Ayat',
-                    'TUNTAS',
-                    BadgeVariant.success,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildSurahRow(
-                    'Abasa (80)',
-                    '42 Ayat',
-                    'TUNTAS',
-                    BadgeVariant.success,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildSurahRow(
-                    'At-Takwir (81)',
-                    '29 Ayat',
-                    'PROSES',
-                    BadgeVariant.warning,
-                  ),
-                ],
+                    const SizedBox(height: 10),
+
+                    if (_surahs.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.menu_book_outlined,
+                                size: 32,
+                                color: AppColors.muted,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Belum ada riwayat setoran surah untuk santri ini.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._surahs.map((surah) {
+                        final isTuntas = surah['is_tuntas'] == true;
+                        final nama = '${surah['nama_latin']} (${surah['nomor']})';
+                        final ayatText = isTuntas
+                            ? '${surah['jumlah_ayat']} Ayat'
+                            : '${surah['ayat_hafal']}/${surah['jumlah_ayat']} Ayat';
+                        final statusText = isTuntas ? 'TUNTAS' : 'PROSES';
+                        final variant = isTuntas ? BadgeVariant.success : BadgeVariant.warning;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: _buildSurahRow(nama, ayatText, statusText, variant),
+                        );
+                      }),
+                  ],
+                ),
               ),
             ),
+    );
+  }
+
+  Widget _buildChildPill(int index, String name, IconData icon) {
+    final isSel = _selectedChildIndex == index;
+    return InkWell(
+      onTap: () => _onSelectChild(index),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSel ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSel ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: isSel ? Colors.white : AppColors.muted),
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                color: isSel ? Colors.white : AppColors.muted,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -198,26 +499,30 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
               child: Icon(icon, size: 20, color: color),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  val,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.dark,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    val,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.dark,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w500,
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -225,12 +530,21 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
     );
   }
 
-  Widget _buildBar(String month, double height, Color color) {
+  Widget _buildBar(String month, int count, double height, Color color) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        Text(
+          count > 0 ? '$count' : '0',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: count > 0 ? AppColors.primary : AppColors.muted,
+          ),
+        ),
+        const SizedBox(height: 4),
         Container(
-          width: 28,
+          width: 26,
           height: height,
           decoration: BoxDecoration(
             color: color,
@@ -265,7 +579,9 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
           Row(
             children: [
               Icon(
-                Icons.check_circle,
+                variant == BadgeVariant.success
+                    ? Icons.check_circle
+                    : Icons.access_time_filled,
                 size: 16,
                 color: variant == BadgeVariant.success
                     ? AppColors.primaryMid
