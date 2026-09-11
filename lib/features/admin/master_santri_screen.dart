@@ -8,6 +8,7 @@ import '../../widgets/app_badge.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/app_dropdown.dart';
+import '../../widgets/app_confirm_dialog.dart';
 
 class MasterSantriScreen extends StatefulWidget {
   const MasterSantriScreen({super.key});
@@ -340,6 +341,216 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
     );
   }
 
+  void _showEditModal(Map<String, dynamic> s) {
+    _namaCtrl.text = s['nama']?.toString() ?? '';
+    _nisCtrl.text = s['nis']?.toString() ?? '';
+    _alamatCtrl.text = (s['alamat'] != null && s['alamat'] != '-') ? s['alamat'].toString() : '';
+    int? editOrtuId = s['wali']?['id'] as int?;
+    final santriId = s['id'] as int;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Data Siswa',
+                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        _clearForm();
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(),
+
+                // Data Siswa
+                _sectionTitle('DATA SISWA'),
+                AppTextField(
+                  label: 'NAMA LENGKAP',
+                  hint: 'Nama lengkap siswa',
+                  controller: _namaCtrl,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'NIS',
+                  hint: 'Nomor Induk Siswa',
+                  controller: _nisCtrl,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'ALAMAT',
+                  hint: 'Alamat lengkap',
+                  controller: _alamatCtrl,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+
+                // Data Orang Tua / Wali
+                _sectionTitle('ORANG TUA / WALI'),
+                AppDropdown<int?>(
+                  label: 'PILIH ORANG TUA / WALI',
+                  hint: 'Pilih Orang Tua / Wali',
+                  leadIcon: Icons.family_restroom_rounded,
+                  leadIconColor: const Color(0xFFD97706),
+                  value: editOrtuId,
+                  items: [
+                    const AppDropdownItem<int?>(
+                      value: null,
+                      label: '- Belum Ditentukan -',
+                      icon: Icons.remove_circle_outline,
+                      iconColor: AppColors.muted,
+                    ),
+                    ..._ortuList.map((o) => AppDropdownItem<int?>(
+                      value: o['id'] as int,
+                      label: o['nama'] as String,
+                      subtitle: '${o['santris_count']} anak terdaftar',
+                      initial: ((o['nama'] as String?)?.isNotEmpty == true ? o['nama'][0] : 'O').toUpperCase(),
+                      iconColor: const Color(0xFFD97706),
+                    )),
+                  ],
+                  onChanged: (v) {
+                    setModal(() => editOrtuId = v);
+                  },
+                ),
+
+                const SizedBox(height: 20),
+                AppButton(
+                  label: 'SIMPAN PERUBAHAN',
+                  icon: Icons.save,
+                  isLoading: _isLoading,
+                  onPressed: () => _updateSantri(ctx, santriId, editOrtuId),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateSantri(BuildContext ctx, int santriId, int? waliId) async {
+    if (_namaCtrl.text.trim().isEmpty || _nisCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan NIS harus diisi')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final payload = <String, dynamic>{
+        'nama_lengkap': _namaCtrl.text.trim(),
+        'nis': _nisCtrl.text.trim(),
+        'alamat': _alamatCtrl.text.trim().isNotEmpty ? _alamatCtrl.text.trim() : null,
+        'wali_id': waliId,
+      };
+
+      await ApiClient().dio.put(
+        ApiEndpoints.santriUpdate(santriId),
+        data: payload,
+      );
+
+      if (ctx.mounted) Navigator.pop(ctx);
+      await _loadData();
+      _clearForm();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.primary,
+          content: Text('Data siswa berhasil diperbarui'),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        String msg = 'Gagal memperbarui data siswa';
+        if (e is DioException && e.response?.data?['message'] != null) {
+          msg = e.response!.data['message'].toString();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.red,
+            content: Text(msg),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _confirmDelete(Map<String, dynamic> s) async {
+    final confirmed = await AppConfirmDialog.show(
+      context: context,
+      title: 'Hapus Data Siswa?',
+      message: 'Yakin ingin menghapus siswa "${s['nama']}" (NIS: ${s['nis']})? Data setoran dan hafalan yang terhubung akan terhapus.',
+      confirmLabel: 'Ya, Hapus',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.person_remove_rounded,
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await ApiClient().dio.delete(ApiEndpoints.santriDelete(s['id'] as int));
+      await _loadData();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.primary,
+          content: Text('Data siswa "${s['nama']}" berhasil dihapus.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.red,
+          content: Text('Gagal menghapus siswa: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _sectionTitle(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -353,7 +564,6 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +586,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _santris.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, i) {
                 final s = _santris[i];
                 return _santriCard(s);
@@ -391,58 +601,72 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
   }
 
   Widget _santriCard(Map<String, dynamic> s) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primaryPale,
-                radius: 24,
-                child: const Icon(Icons.person, color: AppColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s['nama'],
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      'NIS: ${s['nis']}',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
+    return InkWell(
+      onTap: () => _showEditModal(s),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.primaryPale,
+                  radius: 24,
+                  child: const Icon(Icons.person, color: AppColors.primary),
                 ),
-              ),
-              AppBadge(
-                label: s['kelas'] != '-' ? '✓ Ada Kelas' : 'Tanpa Kelas',
-                variant: s['kelas'] != '-' ? BadgeVariant.success : BadgeVariant.warning,
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s['nama'],
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'NIS: ${s['nis']}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppBadge(
+                  label: s['kelas'] != '-' ? '✓ Ada Kelas' : 'Tanpa Kelas',
+                  variant: s['kelas'] != '-' ? BadgeVariant.success : BadgeVariant.warning,
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.primary),
+                  tooltip: 'Edit Siswa',
+                  onPressed: () => _showEditModal(s),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.red),
+                  tooltip: 'Hapus Siswa',
+                  onPressed: () => _confirmDelete(s),
+                ),
+              ],
+            ),
           if (s['alamat'] != '-') ...[
             const SizedBox(height: 8),
             Row(
@@ -530,6 +754,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
           ],
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

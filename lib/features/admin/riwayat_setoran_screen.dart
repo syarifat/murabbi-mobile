@@ -76,15 +76,24 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
 
       setState(() {
         _setorans = ((data['data'] as List?) ?? []).map((s) {
+          String surahName = '-';
+          if (s['surah'] is Map) {
+            surahName = s['surah']['nama_latin'] ?? s['surah']['name'] ?? '-';
+          } else if (s['surah'] is String) {
+            surahName = s['surah'];
+          } else if (s['nama_surah'] != null) {
+            surahName = s['nama_surah'].toString();
+          }
+
           return {
             'id': s['id'],
             'santri_nama': s['santri']?['nama_lengkap'] ?? '-',
             'santri_nis': s['santri']?['nis'] ?? '-',
             'kelas_nama': s['santri']?['kelas']?['nama_kelas'] ?? '-',
             'guru_nama': s['guru']?['name'] ?? '-',
-            'surah': s['surah'] ?? '-',
-            'ayat_awal': s['ayat_awal'] ?? 0,
-            'ayat_akhir': s['ayat_akhir'] ?? 0,
+            'surah': surahName,
+            'ayat_awal': s['ayat_awal'] ?? s['ayat_mulai'] ?? 0,
+            'ayat_akhir': s['ayat_akhir'] ?? s['ayat_selesai'] ?? 0,
             'status': s['status'] ?? '-',
             'catatan': s['catatan'] ?? '',
             'waktu_setor': s['waktu_setor'] ?? '',
@@ -353,7 +362,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
                         child: ListView.separated(
                           padding: const EdgeInsets.all(16),
                           itemCount: _setorans.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          separatorBuilder: (_, _) => const SizedBox(height: 10),
                           itemBuilder: (ctx, i) => _setoranCard(_setorans[i]),
                         ),
                       ),
@@ -401,6 +410,13 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
     final waktu = DateTime.tryParse(s['waktu_setor'] ?? '');
     final waktuFormatted = waktu != null ? DateFormat('dd MMM yyyy, HH:mm').format(waktu) : '-';
 
+    String surahDisplay = '-';
+    if (s['surah'] is Map) {
+      surahDisplay = s['surah']['nama_latin'] ?? s['surah']['name'] ?? '-';
+    } else if (s['surah'] != null) {
+      surahDisplay = s['surah'].toString();
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -426,14 +442,19 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
                     Text(
                       s['santri_nama'] ?? '-',
                       style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       'NIS: ${s['santri_nis']} · ${s['kelas_nama']}',
                       style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -456,24 +477,42 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.menu_book, size: 16, color: AppColors.muted),
+              const Icon(Icons.menu_book, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
-              Text(
-                'QS. ${s['surah']} ayat ${s['ayat_awal']}-${s['ayat_akhir']}',
-                style: GoogleFonts.inter(fontSize: 12),
+              Expanded(
+                child: Text(
+                  'QS. $surahDisplay ayat ${s['ayat_awal']}-${s['ayat_akhir']}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.dark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.schedule, size: 16, color: AppColors.muted),
-              const SizedBox(width: 6),
-              Text(waktuFormatted, style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted)),
+              const Icon(Icons.schedule, size: 14, color: AppColors.muted),
+              const SizedBox(width: 4),
+              Text(
+                waktuFormatted,
+                style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+              ),
               const SizedBox(width: 12),
-              const Icon(Icons.person_outline, size: 16, color: AppColors.muted),
-              const SizedBox(width: 6),
-              Text('Guru: ${s['guru_nama']}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted)),
+              const Icon(Icons.person_outline, size: 14, color: AppColors.muted),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'Guru: ${s['guru_nama']}',
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           if ((s['catatan'] as String).isNotEmpty) ...[

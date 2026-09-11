@@ -161,18 +161,20 @@ class _MasterTahunAjaranScreenState extends State<MasterTahunAjaranScreen> {
       await ApiClient().dio.post(ApiEndpoints.masterTahunAjaran, data: {
         'nama': _namaCtrl.text.trim(),
       });
-      if (!mounted) return;
-      Navigator.pop(ctx);
+      if (ctx.mounted) Navigator.pop(ctx);
       await _loadData();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Berhasil ditambahkan'), backgroundColor: AppColors.primary),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $e'), backgroundColor: AppColors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: AppColors.red),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -209,7 +211,7 @@ class _MasterTahunAjaranScreenState extends State<MasterTahunAjaranScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (ctx, i) => _itemCard(_items[i]),
                 ),
       floatingActionButton: FloatingActionButton(

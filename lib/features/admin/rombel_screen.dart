@@ -368,7 +368,7 @@ class _RombelScreenState extends State<RombelScreen> {
                     shrinkWrap: true,
                     physics: const BouncingScrollPhysics(),
                     itemCount: _rombels.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (ctx, i) {
                       final rombel = _rombels[i];
                       return Container(

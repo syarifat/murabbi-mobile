@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
@@ -64,14 +65,20 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
     try {
       if (id != null) {
         // Update - call update endpoint
-        await ApiClient().dio.put('${ApiEndpoints.masterKelasAll}/$id', data: {
-          'nama_kelas': _namaCtrl.text.trim(),
-        });
+        await ApiClient().dio.put(
+          ApiEndpoints.masterKelasUpdate(id),
+          data: {
+            'nama_kelas': _namaCtrl.text.trim(),
+          },
+        );
       } else {
         // Create - use store endpoint
-        await ApiClient().dio.post(ApiEndpoints.masterKelasStore, data: {
-          'nama_kelas': _namaCtrl.text.trim(),
-        });
+        await ApiClient().dio.post(
+          ApiEndpoints.masterKelasStore,
+          data: {
+            'nama_kelas': _namaCtrl.text.trim(),
+          },
+        );
       }
       if (!mounted) return;
       Navigator.pop(context);
@@ -79,17 +86,23 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
       _loadData();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(id != null ? 'Kelas berhasil diupdate' : 'Kelas berhasil ditambahkan'),
+          content: Text(id != null ? 'Kelas berhasil diperbarui' : 'Kelas berhasil ditambahkan'),
           backgroundColor: AppColors.primary,
         ),
       );
     } catch (e) {
       debugPrint('Error saving kelas: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $e'), backgroundColor: AppColors.red),
-      );
+      String msg = 'Gagal menyimpan kelas';
+      if (e is DioException && e.response?.data?['message'] != null) {
+        msg = e.response!.data['message'].toString();
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: AppColors.red),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -97,7 +110,7 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
     if ((rombel['santris_count'] as int? ?? 0) > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tidak bisa hapus kelas yang sudah punya siswa'),
+          content: Text('Tidak bisa hapus kelas yang sudah memiliki siswa'),
           backgroundColor: AppColors.red,
         ),
       );
@@ -115,16 +128,30 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
     );
 
     if (confirmed == true) {
+      setState(() => _isLoading = true);
       try {
-        await ApiClient().dio.delete('${ApiEndpoints.masterKelasAll}/${rombel['id']}');
-        _loadData();
+        await ApiClient().dio.delete(
+          ApiEndpoints.masterKelasDelete(rombel['id'] as int),
+        );
+        await _loadData();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Kelas berhasil dihapus'), backgroundColor: AppColors.primary),
           );
         }
       } catch (e) {
-        debugPrint('Error deleting: $e');
+        debugPrint('Error deleting kelas: $e');
+        String msg = 'Gagal menghapus kelas';
+        if (e is DioException && e.response?.data?['message'] != null) {
+          msg = e.response!.data['message'].toString();
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: AppColors.red),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -231,7 +258,7 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _rombels.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (ctx, i) {
                     final r = _rombels[i];
                     return _kelasCard(r);

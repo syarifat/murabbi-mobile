@@ -47,6 +47,8 @@ class ApiEndpoints {
   static String userDelete(int id) => '$baseUrl/admin/users/$id';
   static String resetUserPassword(int id) => '$baseUrl/admin/users/$id/reset-password';
   static String get santrisAdmin => '$baseUrl/admin/santris';
+  static String santriUpdate(int id) => '$baseUrl/admin/santris/$id';
+  static String santriDelete(int id) => '$baseUrl/admin/santris/$id';
   static String get mappingGuru => '$baseUrl/admin/mapping';
   static String get laporanGlobal => '$baseUrl/admin/laporan';
 
@@ -64,6 +66,8 @@ class ApiEndpoints {
 
   // Master Kelas
   static String get masterKelasStore => '$baseUrl/admin/master/kelas';
+  static String masterKelasUpdate(int id) => '$baseUrl/admin/master/kelas/$id';
+  static String masterKelasDelete(int id) => '$baseUrl/admin/master/kelas/$id';
 
   // Surahs
   static String get masterSurahs => '$baseUrl/admin/master/surahs';
