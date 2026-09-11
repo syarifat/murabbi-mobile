@@ -128,19 +128,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                   ),
                 ],
               ),
-              if (kelas['jadwal'] != null) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.schedule, size: 14, color: AppColors.muted),
-                    const SizedBox(width: 4),
-                    Text(
-                      kelas['jadwal'] ?? '',
-                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
-                    ),
-                  ],
-                ),
-              ],
+
               const Divider(height: 24),
               Expanded(
                 child: santris.isEmpty
@@ -433,7 +421,6 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
 
   Widget _buildKelasCard(Map<String, dynamic> kelas) {
     final namaKelas = kelas['nama_kelas'] ?? '-';
-    final jadwal = kelas['jadwal'] as String?;
     final santris = (kelas['santris'] as List?) ?? [];
     final count = santris.length;
 
@@ -476,11 +463,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                     namaKelas,
                     style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.dark),
                   ),
-                  if (jadwal != null && jadwal.isNotEmpty)
-                    Text(
-                      jadwal,
-                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted, fontWeight: FontWeight.w500),
-                    ),
+
                 ],
               ),
             ),

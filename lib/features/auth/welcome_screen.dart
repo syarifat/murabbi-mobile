@@ -136,7 +136,7 @@ class WelcomeScreen extends StatelessWidget {
                                         const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 14),
                                         const SizedBox(width: 6),
                                         Text(
-                                          '30 Juz Mutaba\'ah',
+                                          'Tahfidz Mutaba\'ah',
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
@@ -248,7 +248,7 @@ class WelcomeScreen extends StatelessWidget {
                                 child: _buildCapsule(
                                   icon: Icons.trending_up_rounded,
                                   title: 'Progres',
-                                  subtitle: '30 Juz',
+                                  subtitle: 'Al-Qur\'an',
                                   bgColor: AppColors.goldPale,
                                   borderColor: const Color(0xFFFDE68A),
                                   iconColor: AppColors.gold,

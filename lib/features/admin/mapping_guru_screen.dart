@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
-import '../../widgets/app_text_field.dart';
 
 class MappingGuruScreen extends StatefulWidget {
   const MappingGuruScreen({super.key});
@@ -38,7 +37,6 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
             'guru_name': m['guru']?['name'] ?? '-',
             'kelas_id': m['kelas']?['id'],
             'kelas_nama': m['kelas']?['nama_kelas'] ?? '-',
-            'jadwal': m['jadwal_halaqah'] ?? '-',
           };
         }).toList();
       });
@@ -89,7 +87,6 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
     _loadRombels();
     int? selectedGuruId;
     int? selectedKelasId;
-    final jadwalCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -177,20 +174,14 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                       style: GoogleFonts.inter(fontSize: 10, color: AppColors.red),
                     ),
                   ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: 'JADWAL HALAQAH (OPSIONAL)',
-                  hint: 'Contoh: Setiap Kamis 08.00',
-                  controller: jadwalCtrl,
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: (selectedGuruId != null && selectedKelasId != null)
                         ? () async {
                             Navigator.pop(ctx);
-                            await _saveMapping(selectedGuruId!, selectedKelasId!, jadwalCtrl.text.trim());
+                            await _saveMapping(selectedGuruId!, selectedKelasId!);
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -214,7 +205,6 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
     _loadGurus();
     int selectedGuruId = mapping['guru_id'] as int;
     int selectedKelasId = mapping['kelas_id'] as int;
-    final jadwalCtrl = TextEditingController(text: mapping['jadwal'] == '-' ? '' : mapping['jadwal']);
 
     showModalBottomSheet(
       context: context,
@@ -263,19 +253,13 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'JADWAL HALAQAH (OPSIONAL)',
-                hint: 'Contoh: Setiap Kamis 08.00',
-                controller: jadwalCtrl,
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    await _updateMapping(mapping['id'] as int, selectedGuruId, selectedKelasId, jadwalCtrl.text.trim());
+                    await _updateMapping(mapping['id'] as int, selectedGuruId, selectedKelasId);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -293,12 +277,11 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
     );
   }
 
-  Future<void> _saveMapping(int guruId, int kelasId, String jadwal) async {
+  Future<void> _saveMapping(int guruId, int kelasId) async {
     try {
       await ApiClient().dio.post(ApiEndpoints.mappingGuru, data: {
         'guru_id': guruId,
         'kelas_id': kelasId,
-        'jadwal_halaqah': jadwal.isNotEmpty ? jadwal : null,
       });
       await _loadMappings();
       if (mounted) {
@@ -311,12 +294,11 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
     }
   }
 
-  Future<void> _updateMapping(int id, int guruId, int kelasId, String jadwal) async {
+  Future<void> _updateMapping(int id, int guruId, int kelasId) async {
     try {
       await ApiClient().dio.put('${ApiEndpoints.mappingGuru}/$id', data: {
         'guru_id': guruId,
         'kelas_id': kelasId,
-        'jadwal_halaqah': jadwal.isNotEmpty ? jadwal : null,
       });
       await _loadMappings();
       if (mounted) {
@@ -387,7 +369,7 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _mappings.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, index) => const SizedBox(height: 10),
                   itemBuilder: (ctx, i) => _mappingCard(_mappings[i]),
                 ),
       floatingActionButton: FloatingActionButton(
@@ -419,29 +401,17 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
               children: [
                 Text(
                   m['guru_name'] as String,
-                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.class_, size: 14, color: AppColors.muted),
+                    const Icon(Icons.meeting_room_rounded, size: 15, color: AppColors.muted),
                     const SizedBox(width: 4),
                     Text(
                       m['kelas_nama'] as String,
-                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                     ),
-                    if (m['jadwal'] != '-') ...[
-                      const SizedBox(width: 8),
-                      const Icon(Icons.schedule, size: 14, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          m['jadwal'] as String,
-                          style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],

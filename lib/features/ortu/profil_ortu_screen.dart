@@ -115,11 +115,247 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
     }
   }
 
+  void _showSantriDetailPopup(BuildContext context, List<dynamic> santris) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldPale,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.family_restroom, color: AppColors.gold, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Data Santri Terdaftar',
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              ...santris.map((s) {
+                final nama = s['nama_lengkap'] ?? '-';
+                final nis = s['nis'] ?? '-';
+                final kelas = s['kelas']?['nama_kelas'] ?? '-';
+                final suratSelesai = s['surat_selesai'] ?? 0;
+                final totalAyat = s['total_ayat_hafal'] ?? 0;
+                final progressPct = (s['progress_pct'] as num?)?.toInt() ?? 0;
+                final totalSetoran = s['total_setoran'] ?? 0;
+                final capaianTerbaru = s['capaian_terbaru'];
+                String? infoTerakhir;
+                if (capaianTerbaru != null && capaianTerbaru['surah'] != null) {
+                  final surahName = capaianTerbaru['surah']['nama_latin'] ?? '';
+                  final ayat = '${capaianTerbaru['ayat_mulai']}-${capaianTerbaru['ayat_selesai']}';
+                  final status = (capaianTerbaru['status'] ?? '').toString().toUpperCase();
+                  infoTerakhir = '$surahName (Ayat $ayat) · $status';
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.goldPale,
+                            child: Text(
+                              nama.isNotEmpty ? nama[0].toUpperCase() : 'S',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.gold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  nama,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.dark,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'NIS: $nis · $kelas',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: AppColors.muted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Metrics
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.bg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildSantriStatCol('Surat Selesai', '$suratSelesai Surah'),
+                            Container(width: 1, height: 24, color: AppColors.border),
+                            _buildSantriStatCol('Ayat Dihafal', '$totalAyat Ayat'),
+                            Container(width: 1, height: 24, color: AppColors.border),
+                            _buildSantriStatCol('Total Setor', '$totalSetoran Sesi'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Progress Bar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Progres Hafalan',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '$progressPct%',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.gold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: progressPct / 100.0,
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
+                          minHeight: 6,
+                        ),
+                      ),
+                      if (infoTerakhir != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldPale,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.history_rounded, size: 14, color: AppColors.gold),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Setoran Terakhir: $infoTerakhir',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.gold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSantriStatCol(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.dark,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            color: AppColors.muted,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wali = _data['wali']?['name'] ?? 'Wali Murid';
     final email = _data['wali']?['email'] ?? '';
-    final noHp = _data['wali']?['no_hp'] as String?;
     final santris = (_data['santris'] as List?) ?? [];
 
     // Build wali dari text
@@ -205,12 +441,13 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Santri List
+                    // Santri List (Clickable to show popup)
                     if (santris.isNotEmpty) ...[
                       _buildProfileItem(
                         Icons.family_restroom,
                         'Santri Terdaftar',
-                        '${santris.length} Anak (${santris.map((s) => s['nama_lengkap'] ?? '').join(', ')})',
+                        '${santris.length} Anak (${santris.map((s) => s['nama_lengkap'] ?? '').join(', ')}) · Ketuk untuk detail',
+                        onTap: () => _showSantriDetailPopup(context, santris),
                       ),
                       const SizedBox(height: 10),
                     ],
@@ -220,14 +457,6 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                       Icons.email_outlined,
                       'Email Akun',
                       email.isNotEmpty ? email : '-',
-                    ),
-                    const SizedBox(height: 10),
-
-                    // No HP
-                    _buildProfileItem(
-                      Icons.phone_android,
-                      'Nomor WhatsApp',
-                      noHp != null && noHp.isNotEmpty ? '$noHp (Terverifikasi)' : '-',
                     ),
                     const SizedBox(height: 10),
 
@@ -251,67 +480,6 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                           builder: (_) => const RekapPerkembanganScreen(),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Notifikasi
-                    _buildProfileItem(
-                      Icons.notifications_active_outlined,
-                      'Pengaturan Notifikasi',
-                      'Laporan Harian & Pembaruan Sistem',
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            title: Text(
-                              'Pengaturan Notifikasi',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: const Icon(
-                                    Icons.phone_android,
-                                    color: AppColors.primary,
-                                  ),
-                                  title: Text(
-                                    'Notifikasi WhatsApp',
-                                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: Text(
-                                    'Kirim laporan setoran harian ke nomor terdaftar',
-                                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
-                                  ),
-                                  trailing: const Icon(
-                                    Icons.check_circle,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: Text(
-                                  'Tutup',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
                     ),
                     const SizedBox(height: 24),
 

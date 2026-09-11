@@ -148,12 +148,8 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
       final tuntasCount = computedSurahs.where((s) => s['is_tuntas'] == true).length;
       final totalAyatHafal = computedSurahs.fold<int>(0, (sum, item) => sum + ((item['ayat_hafal'] as int?) ?? 0));
 
-      final activeSantri = _santris.isNotEmpty && _selectedChildIndex < _santris.length
-          ? _santris[_selectedChildIndex]
-          : null;
-      final targetJuz = activeSantri?['target_juz'] ?? 'Juz 30';
-      final targetAyat = targetJuz == 'Juz 30' ? 564 : 6236;
-      final progressPct = ((totalAyatHafal / targetAyat) * 100).clamp(0, 100).round();
+      const totalTargetSurah = 114;
+      final progressPct = ((tuntasCount / totalTargetSurah) * 100).clamp(0, 100).round();
 
       if (mounted) {
         setState(() {
@@ -162,7 +158,6 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
             'surat_selesai': tuntasCount,
             'total_ayat': totalAyatHafal,
             'progress_pct': progressPct,
-            'target_juz': targetJuz,
           };
           _monthlyStats = computedMonthly;
           _surahs = computedSurahs;
@@ -186,10 +181,7 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeSantri = _santris.isNotEmpty && _selectedChildIndex < _santris.length
-        ? _santris[_selectedChildIndex]
-        : null;
-    final targetJuz = _summary['target_juz'] ?? activeSantri?['target_juz'] ?? 'Juz 30';
+    final progressPct = _summary['progress_pct'] ?? 0;
     final totalSetoran = _summary['total_setoran'] ?? 0;
     final suratSelesai = _summary['surat_selesai'] ?? 0;
     final totalAyat = _summary['total_ayat'] ?? 0;
@@ -208,12 +200,6 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
           'Rekap Perkembangan',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: AppBadge(label: targetJuz, variant: BadgeVariant.neutral),
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(
@@ -292,9 +278,9 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
                         ),
                         const SizedBox(width: 12),
                         _buildStatCard(
-                          'Target Hafalan',
-                          targetJuz,
-                          Icons.flag_outlined,
+                          'Progres Hafalan',
+                          '$progressPct%',
+                          Icons.trending_up_rounded,
                           AppColors.primaryMid,
                           AppColors.primaryPale,
                         ),

@@ -441,7 +441,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              'Target: ${k['target_juz'] ?? "Juz 30"}',
+                              '${(k['santris'] as List?)?.length ?? 0} Santri Terdaftar',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 color: AppColors.muted,

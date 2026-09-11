@@ -100,8 +100,7 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
         ? (_suratSelesaiBySantri[activeSantriId] ?? (activeSantri?['surat_selesai'] as num?)?.toInt() ?? 0)
         : 0;
 
-    final targetJuz = activeSantri?['target_juz'] ?? 'Juz 30';
-    final totalTargetSurah = targetJuz == 'Juz 30' ? 37 : 114;
+    const totalTargetSurah = 114;
     final progressVal = (suratSelesaiCount / totalTargetSurah).clamp(0.0, 1.0);
     final progressPercent = (progressVal * 100).round();
 
@@ -292,8 +291,8 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                                 Flexible(
                                   child: Text(
                                     activeSantri != null
-                                        ? 'Target Hafalan · ${activeSantri['nama_lengkap']}'
-                                        : 'Target Tahfidz Santri',
+                                        ? 'Progres Hafalan · ${activeSantri['nama_lengkap']}'
+                                        : 'Progres Tahfidz Santri',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
@@ -327,7 +326,7 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Target: $targetJuz ($totalTargetSurah Surat)',
+                                  '$suratSelesaiCount dari 114 Surat Selesai',
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
                                     color: AppColors.muted,
