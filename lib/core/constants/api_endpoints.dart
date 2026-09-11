@@ -43,6 +43,8 @@ class ApiEndpoints {
   // Admin
   static String get adminDashboard => '$baseUrl/admin/dashboard';
   static String get users => '$baseUrl/admin/users';
+  static String userUpdate(int id) => '$baseUrl/admin/users/$id';
+  static String userDelete(int id) => '$baseUrl/admin/users/$id';
   static String resetUserPassword(int id) => '$baseUrl/admin/users/$id/reset-password';
   static String get santrisAdmin => '$baseUrl/admin/santris';
   static String get mappingGuru => '$baseUrl/admin/mapping';

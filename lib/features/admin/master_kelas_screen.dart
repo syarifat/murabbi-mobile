@@ -5,6 +5,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/app_confirm_dialog.dart';
 
 class MasterKelasScreen extends StatefulWidget {
   const MasterKelasScreen({super.key});
@@ -103,23 +104,14 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Hapus Kelas', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text('Yakin hapus kelas "${rombel['nama_kelas']}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      title: 'Hapus Kelas?',
+      message: 'Yakin ingin menghapus kelas "${rombel['nama_kelas']}"? Data ini tidak dapat dikembalikan.',
+      confirmLabel: 'Ya, Hapus',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed == true) {

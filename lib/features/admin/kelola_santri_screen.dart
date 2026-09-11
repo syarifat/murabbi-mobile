@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../../widgets/app_confirm_dialog.dart';
 
 class KelolaSantriScreen extends StatefulWidget {
   const KelolaSantriScreen({super.key});
@@ -45,22 +46,6 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
     }
   }
 
-  Future<void> _assignToKelas(int rombelId, int santriId) async {
-    try {
-      await ApiClient().dio.post(ApiEndpoints.rombelAssign, data: {
-        'santri_id': santriId,
-        'kelas_id': rombelId,
-      });
-      await _loadData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Siswa berhasil dimasukkan ke kelas'), backgroundColor: AppColors.primary),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error assign: $e');
-    }
-  }
 
   Future<void> _removeFromKelas(int santriId) async {
     try {
@@ -84,8 +69,6 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
       MaterialPageRoute(
         builder: (_) => _KelasDetailScreen(
           rombel: rombel,
-          tanpaKelas: _tanpaKelas,
-          onAssign: _assignToKelas,
           onRemove: _removeFromKelas,
           onRefresh: _loadData,
         ),
@@ -290,15 +273,11 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
 
 class _KelasDetailScreen extends StatefulWidget {
   final Map<String, dynamic> rombel;
-  final List<Map<String, dynamic>> tanpaKelas;
-  final Future<void> Function(int rombelId, int santriId) onAssign;
   final Future<void> Function(int santriId) onRemove;
   final Future<void> Function() onRefresh;
 
   const _KelasDetailScreen({
     required this.rombel,
-    required this.tanpaKelas,
-    required this.onAssign,
     required this.onRemove,
     required this.onRefresh,
   });
@@ -308,8 +287,6 @@ class _KelasDetailScreen extends StatefulWidget {
 }
 
 class _KelasDetailScreenState extends State<_KelasDetailScreen> {
-  bool _showTanpaKelas = false;
-
   List<Map<String, dynamic>> get _santris {
     return (widget.rombel['santris'] as List? ?? [])
         .map((s) => s as Map<String, dynamic>)
@@ -325,51 +302,33 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
           widget.rombel['nama_kelas'] ?? 'Kelas',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(_showTanpaKelas ? Icons.group : Icons.person_add),
-            tooltip: _showTanpaKelas ? 'Lihat di Kelas' : 'Tambah Siswa',
-            onPressed: () => setState(() => _showTanpaKelas = !_showTanpaKelas),
-          ),
-        ],
       ),
-      body: _showTanpaKelas ? _buildTanpaKelas() : _buildSantriList(),
-      floatingActionButton: _showTanpaKelas
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAssignDialog(),
-              backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(
-                'Tambah Siswa',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : null,
+      body: _buildSantriList(),
     );
   }
 
   Widget _buildSantriList() {
     if (_santris.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: AppColors.muted.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada siswa di kelas ini',
-              style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Klik tombol + untuk menambahkan',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.people_outline, size: 64, color: AppColors.muted.withValues(alpha: 0.5)),
+              const SizedBox(height: 16),
+              Text(
+                'Belum ada siswa di kelas ini',
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.dark),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Untuk menambahkan siswa ke kelas ini, pilih siswa dari daftar "Siswa Belum Ada Kelas" di halaman Rombel.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted, height: 1.4),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -384,15 +343,25 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
               CircleAvatar(
                 backgroundColor: AppColors.primaryPale,
                 radius: 20,
-                child: const Icon(Icons.person, color: AppColors.primary, size: 20),
+                child: Text(
+                  ((s['nama_lengkap'] as String?)?.isNotEmpty == true ? s['nama_lengkap'][0] : 'S').toUpperCase(),
+                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -402,10 +371,12 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
                     Text(
                       s['nama_lengkap'] ?? '-',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        color: AppColors.dark,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'NIS: ${s['nis'] ?? '-'}',
                       style: GoogleFonts.inter(
@@ -417,8 +388,8 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.remove_circle_outline, color: AppColors.red),
-                tooltip: 'Keluarkan dari kelas',
+                icon: const Icon(Icons.person_remove_outlined, color: AppColors.red),
+                tooltip: 'Keluarkan dari Kelas',
                 onPressed: () => _confirmRemove(s),
               ),
             ],
@@ -428,250 +399,25 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
     );
   }
 
-  Widget _buildTanpaKelas() {
-    final tanpa = widget.tanpaKelas;
-    if (tanpa.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Semua siswa sudah punya kelas',
-              style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted),
-            ),
-          ],
-        ),
-      );
+  void _confirmRemove(Map<String, dynamic> s) async {
+    final confirmed = await AppConfirmDialog.show(
+      context: context,
+      title: 'Keluarkan dari Kelas?',
+      message: 'Yakin ingin mengeluarkan ${s['nama_lengkap']} dari kelas ini?',
+      confirmLabel: 'Ya, Keluarkan',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.person_remove_rounded,
+    );
+
+    if (confirmed == true) {
+      await widget.onRemove(s['id'] as int);
+      setState(() {
+        (widget.rombel['santris'] as List?)?.removeWhere((item) => item['id'] == s['id']);
+        final currentCount = widget.rombel['santris_count'] as int? ?? 1;
+        widget.rombel['santris_count'] = currentCount > 0 ? currentCount - 1 : 0;
+      });
+      await widget.onRefresh();
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.goldPale,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.warning_amber, color: AppColors.gold, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${tanpa.length} Siswa belum masuk kelas manapun',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.gold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: tanpa.length,
-            itemBuilder: (ctx, i) {
-              final s = tanpa[i];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.goldPale,
-                      radius: 20,
-                      child: const Icon(Icons.person_outline, color: AppColors.gold, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s['nama_lengkap'] ?? '-',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'NIS: ${s['nis'] ?? '-'}',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => _confirmAssign(s),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      ),
-                      child: Text(
-                        'Masukkan',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showAssignDialog() {
-    if (widget.tanpaKelas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua siswa sudah punya kelas')),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        expand: false,
-        builder: (ctx, scrollCtrl) => Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Pilih Siswa',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.all(16),
-                itemCount: widget.tanpaKelas.length,
-                itemBuilder: (ctx, i) {
-                  final s = widget.tanpaKelas[i];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.goldPale,
-                      child: const Icon(Icons.person_outline, color: AppColors.gold),
-                    ),
-                    title: Text(
-                      s['nama_lengkap'] ?? '-',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text('NIS: ${s['nis'] ?? '-'}'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _confirmAssign(s);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Pilih'),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _confirmAssign(Map<String, dynamic> s) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Masukkan ke Kelas', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text(
-          'Yakin masukkan ${s['nama_lengkap']} ke ${widget.rombel['nama_kelas']}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await widget.onAssign(widget.rombel['id'] as int, s['id'] as int);
-              await widget.onRefresh();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Ya, Masukkan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmRemove(Map<String, dynamic> s) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Keluarkan dari Kelas', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text(
-          'Yakin keluarkan ${s['nama_lengkap']} dari kelas ini?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await widget.onRemove(s['id'] as int);
-              await widget.onRefresh();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            child: const Text('Ya, Keluarkan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 }

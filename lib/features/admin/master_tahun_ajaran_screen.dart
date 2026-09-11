@@ -6,6 +6,7 @@ import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/app_confirm_dialog.dart';
 
 class MasterTahunAjaranScreen extends StatefulWidget {
   const MasterTahunAjaranScreen({super.key});
@@ -71,20 +72,14 @@ class _MasterTahunAjaranScreenState extends State<MasterTahunAjaranScreen> {
   }
 
   Future<void> _deleteItem(Map<String, dynamic> item) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Hapus Tahun Ajaran', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text('Yakin hapus "${item['nama']}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      title: 'Hapus Tahun Ajaran?',
+      message: 'Yakin ingin menghapus tahun ajaran "${item['nama']}"? Data ini tidak dapat dikembalikan.',
+      confirmLabel: 'Ya, Hapus',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed == true) {

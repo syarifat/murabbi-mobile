@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_dropdown.dart';
+import '../../widgets/app_confirm_dialog.dart';
 
 class MappingGuruScreen extends StatefulWidget {
   const MappingGuruScreen({super.key});
@@ -285,20 +286,14 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
   }
 
   Future<void> _deleteMapping(Map<String, dynamic> mapping) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Hapus Mapping', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text('Yakin hapus mapping ${mapping['guru_name']} ke ${mapping['kelas_nama']}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      title: 'Hapus Mapping?',
+      message: 'Yakin ingin menghapus mapping guru ${mapping['guru_name']} dari kelas ${mapping['kelas_nama']}?',
+      confirmLabel: 'Ya, Hapus',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed == true) {

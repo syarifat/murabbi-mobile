@@ -5,6 +5,7 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/app_confirm_dialog.dart';
 import 'edit_setoran_screen.dart';
 
 class RiwayatSetoranScreen extends StatefulWidget {
@@ -140,46 +141,24 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
     );
   }
 
-  void _showDeleteDialog(dynamic log) {
+  void _showDeleteDialog(dynamic log) async {
     final id = log['id'];
     final sName = log['santri']?['nama_lengkap'] ?? 'Siswa';
     final surah = log['surah']?['nama_latin'] ?? 'Surah';
 
-    showDialog(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Hapus Riwayat Setoran?',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.red,
-          ),
-        ),
-        content: Text(
-          'Anda yakin ingin menghapus data setoran $sName ($surah)? Aksi ini tidak dapat dibatalkan.',
-          style: GoogleFonts.inter(fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.red,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              if (id != null) _deleteSetoran(id);
-            },
-            child: const Text('Hapus Data'),
-          ),
-        ],
-      ),
+      title: 'Hapus Riwayat Setoran?',
+      message: 'Anda yakin ingin menghapus data setoran $sName ($surah)? Aksi ini tidak dapat dibatalkan.',
+      confirmLabel: 'Ya, Hapus Data',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.delete_outline_rounded,
     );
+
+    if (confirmed == true && id != null) {
+      _deleteSetoran(id);
+    }
   }
 
   void _showDetailModal(dynamic log) {

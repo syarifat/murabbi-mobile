@@ -6,6 +6,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/change_password_dialog.dart';
+import '../../widgets/app_confirm_dialog.dart';
 import '../auth/welcome_screen.dart';
 import 'rekap_perkembangan_screen.dart';
 
@@ -39,64 +40,14 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
   }
 
   void _handleLogout() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.redPale,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.logout, color: AppColors.red, size: 32),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Keluar dari Akun?',
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Anda harus login ulang untuk mengakses aplikasi.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text('Batal', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text('Keluar', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      title: 'Keluar dari Akun?',
+      message: 'Anda harus login ulang untuk mengakses aplikasi.',
+      confirmLabel: 'Keluar',
+      cancelLabel: 'Batal',
+      confirmColor: AppColors.red,
+      icon: Icons.logout_rounded,
     );
 
     if (confirmed == true && mounted) {
