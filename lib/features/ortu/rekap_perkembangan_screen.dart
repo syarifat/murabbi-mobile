@@ -395,7 +395,7 @@ class _RekapPerkembanganScreenState extends State<RekapPerkembanganScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Belum ada riwayat setoran surah untuk santri ini.',
+                                'Belum ada riwayat setoran surah untuk siswa ini.',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   color: AppColors.muted,

@@ -54,7 +54,7 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
       await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Santri berhasil dimasukkan ke kelas'), backgroundColor: AppColors.primary),
+          const SnackBar(content: Text('Siswa berhasil dimasukkan ke kelas'), backgroundColor: AppColors.primary),
         );
       }
     } catch (e) {
@@ -70,7 +70,7 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
       await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Santri dikeluarkan dari kelas'), backgroundColor: AppColors.primary),
+          const SnackBar(content: Text('Siswa dikeluarkan dari kelas'), backgroundColor: AppColors.primary),
         );
       }
     } catch (e) {
@@ -269,7 +269,7 @@ class _KelolaSantriScreenState extends State<KelolaSantriScreen> {
                       const Icon(Icons.people, size: 14, color: AppColors.muted),
                       const SizedBox(width: 4),
                       Text(
-                        '$count Santri',
+                        '$count Siswa',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.muted,
@@ -328,7 +328,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(_showTanpaKelas ? Icons.group : Icons.person_add),
-            tooltip: _showTanpaKelas ? 'Lihat di Kelas' : 'Tambah Santri',
+            tooltip: _showTanpaKelas ? 'Lihat di Kelas' : 'Tambah Siswa',
             onPressed: () => setState(() => _showTanpaKelas = !_showTanpaKelas),
           ),
         ],
@@ -340,7 +340,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
-                'Tambah Santri',
+                'Tambah Siswa',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -361,7 +361,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
             Icon(Icons.people_outline, size: 64, color: AppColors.muted.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'Belum ada santri di kelas ini',
+              'Belum ada siswa di kelas ini',
               style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted),
             ),
             const SizedBox(height: 8),
@@ -438,7 +438,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
             Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'Semua santri sudah punya kelas',
+              'Semua siswa sudah punya kelas',
               style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted),
             ),
           ],
@@ -463,7 +463,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${tanpa.length} Santri belum masuk kelas manapun',
+                  '${tanpa.length} Siswa belum masuk kelas manapun',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -548,7 +548,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
   void _showAssignDialog() {
     if (widget.tanpaKelas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua santri sudah punya kelas')),
+        const SnackBar(content: Text('Semua siswa sudah punya kelas')),
       );
       return;
     }
@@ -572,7 +572,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Pilih Santri',
+                    'Pilih Siswa',
                     style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   IconButton(

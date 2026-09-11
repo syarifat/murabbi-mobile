@@ -291,7 +291,7 @@ class _MasterTahunAjaranScreenState extends State<MasterTahunAjaranScreen> {
                     const Icon(Icons.people, size: 14, color: AppColors.muted),
                     const SizedBox(width: 4),
                     Text(
-                      '${item['santris_count']} Santri',
+                      '${item['santris_count']} Siswa',
                       style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
                     ),
                   ],

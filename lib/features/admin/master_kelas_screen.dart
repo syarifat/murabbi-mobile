@@ -96,7 +96,7 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
     if ((rombel['santris_count'] as int? ?? 0) > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tidak bisa hapus kelas yang sudah punya santri'),
+          content: Text('Tidak bisa hapus kelas yang sudah punya siswa'),
           backgroundColor: AppColors.red,
         ),
       );
@@ -311,7 +311,7 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '$count Santri',
+                      '$count Siswa',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: count > 0 ? AppColors.primary : AppColors.muted,

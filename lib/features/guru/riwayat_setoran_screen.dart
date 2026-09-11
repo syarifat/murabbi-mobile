@@ -142,7 +142,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
 
   void _showDeleteDialog(dynamic log) {
     final id = log['id'];
-    final sName = log['santri']?['nama_lengkap'] ?? 'Santri';
+    final sName = log['santri']?['nama_lengkap'] ?? 'Siswa';
     final surah = log['surah']?['nama_latin'] ?? 'Surah';
 
     showDialog(
@@ -183,7 +183,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
   }
 
   void _showDetailModal(dynamic log) {
-    final sName = log['santri']?['nama_lengkap'] ?? 'Santri';
+    final sName = log['santri']?['nama_lengkap'] ?? 'Siswa';
     final kName = log['santri']?['kelas']?['nama_kelas'] ?? 'Kelas Tahfidz';
     final surah = log['surah']?['nama_latin'] ?? 'Surah';
     final ayat = '${log['ayat_mulai']}-${log['ayat_selesai']}';
@@ -222,7 +222,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
             ),
             const Divider(),
             const SizedBox(height: 8),
-            _buildRow('Santri', sName),
+            _buildRow('Siswa', sName),
             _buildRow('Kelas', kName),
             _buildRow('Materi Hafalan', '$surah (Ayat $ayat)'),
             _buildRow('Status Kelancaran', status.toString().toUpperCase()),
@@ -296,7 +296,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: Text(
-          'Riwayat Setoran Santri',
+          'Riwayat Setoran Siswa',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [
@@ -328,7 +328,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
                   ),
                   onPressed: _fetchSetorans,
                 ),
-                hintText: 'Cari nama santri / surah...',
+                hintText: 'Cari nama siswa / surah...',
               ),
             ),
           ),
@@ -386,7 +386,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
                       itemBuilder: (context, i) {
                         final log = _setoranList[i];
                         final sName =
-                            log['santri']?['nama_lengkap'] ?? 'Santri';
+                            log['santri']?['nama_lengkap'] ?? 'Siswa';
                         final surah = log['surah']?['nama_latin'] ?? 'Surah';
                         final ayat =
                             "${log['ayat_mulai']}-${log['ayat_selesai']}";

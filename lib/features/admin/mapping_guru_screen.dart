@@ -117,7 +117,7 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                 const Divider(),
                 const SizedBox(height: 8),
                 // Pilih Guru
-                Text('GURU / USTADZ', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
+                Text('GURU', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -232,7 +232,7 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
               const Divider(),
               const SizedBox(height: 8),
               // Pilih Guru
-              Text('GURU / USTADZ', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
+              Text('GURU', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),

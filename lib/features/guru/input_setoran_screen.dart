@@ -22,7 +22,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
   String _selectedKelasName = 'Pilih Kelas / Rombel';
 
   int? _selectedSantriId;
-  String _selectedSantriName = 'Pilih Santri';
+  String _selectedSantriName = 'Pilih Siswa';
 
   int? _selectedSurahId;
   String _selectedSurahName = 'Pilih Surah';
@@ -162,17 +162,17 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _santriList = santris;
         if (_santriList.isNotEmpty) {
           _selectedSantriId = _santriList[0]['id'];
-          _selectedSantriName = _santriList[0]['nama_lengkap'] ?? 'Pilih Santri';
+          _selectedSantriName = _santriList[0]['nama_lengkap'] ?? 'Pilih Siswa';
         } else {
           _selectedSantriId = null;
-          _selectedSantriName = 'Tidak ada santri';
+          _selectedSantriName = 'Tidak ada siswa';
         }
       } else {
         _selectedKelasId = null;
         _selectedKelasName = 'Pilih Kelas / Rombel';
         _santriList = [];
         _selectedSantriId = null;
-        _selectedSantriName = 'Pilih Santri';
+        _selectedSantriName = 'Pilih Siswa';
       }
 
       if (_surahList.isNotEmpty) {
@@ -386,7 +386,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _selectedSantriName = santris[0]['nama_lengkap'];
       } else {
         _selectedSantriId = null;
-        _selectedSantriName = 'Tidak ada santri';
+        _selectedSantriName = 'Tidak ada siswa';
       }
     });
 
@@ -441,7 +441,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              '${(k['santris'] as List?)?.length ?? 0} Santri Terdaftar',
+                              '${(k['santris'] as List?)?.length ?? 0} Siswa Terdaftar',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 color: AppColors.muted,
@@ -512,7 +512,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Pilih Santri',
+                          'Pilih Siswa',
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -538,14 +538,14 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Santri bertanda hijau sudah menyetorkan hafalan hari ini.',
+                      'Siswa bertanda hijau sudah menyetorkan hafalan hari ini.',
                       style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       onChanged: (val) => setModalState(() => searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Cari nama santri atau NIS...',
+                        hintText: 'Cari nama siswa atau NIS...',
                         hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
                         prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
                         filled: true,
@@ -570,11 +570,11 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     const Divider(height: 16),
                     Expanded(
                       child: _santriList.isEmpty
-                          ? const Center(child: Text('Tidak ada santri di kelas ini'))
+                          ? const Center(child: Text('Tidak ada siswa di kelas ini'))
                           : filteredSantris.isEmpty
                               ? Center(
                                   child: Text(
-                                    'Santri "$searchQuery" tidak ditemukan',
+                                    'Siswa "$searchQuery" tidak ditemukan',
                                     style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
                                   ),
                                 )
@@ -926,7 +926,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
     if (_selectedSantriId == null || _selectedSurahId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Harap pilih santri dan surah terlebih dahulu!'),
+          content: Text('Harap pilih siswa dan surah terlebih dahulu!'),
         ),
       );
       return;
@@ -936,7 +936,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Surah ini sudah tuntas diselesaikan oleh santri terpilih!',
+            'Surah ini sudah tuntas diselesaikan oleh siswa terpilih!',
           ),
         ),
       );
@@ -1126,9 +1126,9 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Santri Picker
+            // Siswa Picker
             AppTextField(
-              label: 'PILIH SANTRI',
+              label: 'PILIH SISWA',
               hint: _selectedSantriName,
               readOnly: true,
               suffixIcon: const Icon(Icons.expand_more, color: AppColors.sub),
@@ -1141,7 +1141,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                   const Icon(Icons.check_circle, size: 14, color: AppColors.primary),
                   const SizedBox(width: 4),
                   Text(
-                    'Santri ini sudah setor hari ini (bisa setor lagi jika ada tambahan)',
+                    'Siswa ini sudah setor hari ini (bisa setor lagi jika ada tambahan)',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -1293,7 +1293,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
             // Catatan Form
             AppTextField(
               label: 'CATATAN EVALUASI & TAJWID',
-              hint: 'Tulis makhraj/mad yang perlu diperhatikan santri...',
+              hint: 'Tulis makhraj/mad yang perlu diperhatikan siswa...',
               controller: _catatanCtrl,
               maxLines: 3,
             ),

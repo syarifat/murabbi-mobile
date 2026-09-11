@@ -123,7 +123,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                 ),
                 child: const Icon(Icons.school, color: AppColors.primary),
               ),
-              title: const Text('Guru / Ustadz'),
+              title: const Text('Guru'),
               subtitle: const Text('Tambah akun guru pengajar'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -180,7 +180,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tambah ${currentRole == 'guru' ? 'Guru/Ustadz' : 'Admin'}',
+                      'Tambah ${currentRole == 'guru' ? 'Guru' : 'Admin'}',
                       style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     IconButton(

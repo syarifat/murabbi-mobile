@@ -208,7 +208,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Row(
                         children: [
                           _buildKpiCard(
-                            'Total Santri',
+                            'Total Siswa',
                             '${_stats['total_santri'] ?? 0}',
                             Icons.school,
                             AppColors.primary,

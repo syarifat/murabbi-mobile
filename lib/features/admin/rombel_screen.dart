@@ -229,7 +229,7 @@ class _RombelScreenState extends State<RombelScreen> {
                     children: [
                       const Icon(Icons.people, size: 14, color: AppColors.muted),
                       const SizedBox(width: 4),
-                      Text('$count Santri', style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted)),
+                      Text('$count Siswa', style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted)),
                     ],
                   ),
                 ],
@@ -259,7 +259,7 @@ class _RombelScreenState extends State<RombelScreen> {
                 const Icon(Icons.warning_amber, color: AppColors.gold, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'SANTRI BELUM ADA KELAS (${_tanpaKelas.length})',
+                  'SISWA BELUM ADA KELAS (${_tanpaKelas.length})',
                   style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.gold),
                 ),
               ],
@@ -285,41 +285,27 @@ class _RombelScreenState extends State<RombelScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            Text(
+              'Pilih Kelas untuk ${santri['nama_lengkap']}',
+              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Pilih Kelas untuk ${santri['nama_lengkap']}',
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-            const Divider(),
+            const SizedBox(height: 12),
             ..._rombels.map((rombel) => ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPale,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'K${rombel['id']}',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
-                      ),
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primaryPale,
+                    child: Text(
+                      'K${rombel['id']}',
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
                     ),
                   ),
                   title: Text(rombel['nama_kelas'] ?? '-'),
-                  subtitle: Text('${rombel['santris_count'] ?? 0} Santri'),
+                  subtitle: Text('${rombel['santris_count'] ?? 0} Siswa'),
                   trailing: const Icon(Icons.add_circle_outline, color: AppColors.primary),
                   onTap: () async {
                     Navigator.pop(ctx);
@@ -369,7 +355,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(_showTanpaKelas ? Icons.group : Icons.person_add),
-            tooltip: _showTanpaKelas ? 'Lihat di Kelas' : 'Tambah Santri',
+            tooltip: _showTanpaKelas ? 'Lihat di Kelas' : 'Tambah Siswa',
             onPressed: () => setState(() => _showTanpaKelas = !_showTanpaKelas),
           ),
         ],
@@ -381,7 +367,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
                   onPressed: () => _showAssignDialog(),
                   backgroundColor: AppColors.primary,
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: Text('Tambah Santri', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                  label: Text('Tambah Siswa', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
                 )
               : null
           : null,
@@ -396,7 +382,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
           children: [
             Icon(Icons.people_outline, size: 64, color: AppColors.muted.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('Belum ada santri', style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted)),
+            Text('Belum ada siswa', style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted)),
             const SizedBox(height: 8),
             Text('Klik tombol + untuk menambahkan', style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted)),
           ],
@@ -449,7 +435,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
           children: [
             Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('Semua santri sudah punya kelas', style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted)),
+            Text('Semua siswa sudah punya kelas', style: GoogleFonts.inter(fontSize: 16, color: AppColors.muted)),
           ],
         ),
       );
@@ -468,7 +454,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
               const Icon(Icons.warning_amber, color: AppColors.gold, size: 20),
               const SizedBox(width: 8),
               Text(
-                '${widget.tanpaKelas.length} Santri belum masuk kelas',
+                '${widget.tanpaKelas.length} Siswa belum masuk kelas',
                 style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gold),
               ),
             ],
@@ -538,7 +524,7 @@ class _KelasDetailScreenState extends State<_KelasDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Pilih Santri', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+                  Text('Pilih Siswa', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),

@@ -74,7 +74,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
       final prefs = await SharedPreferences.getInstance();
       setState(() {
         _guruData = {
-          'name': prefs.getString('user_name') ?? 'Ustadz',
+          'name': prefs.getString('user_name') ?? 'Guru',
           'email': prefs.getString('user_email') ?? '',
           'role': prefs.getString('user_role') ?? 'guru',
         };
@@ -120,19 +120,15 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    '${santris.length} Santri',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    '${santris.length} Siswa',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ),
-
-              const Divider(height: 24),
+              const Divider(height: 20),
               Expanded(
                 child: santris.isEmpty
-                    ? const Center(child: Text('Tidak ada santri'))
+                    ? const Center(child: Text('Tidak ada siswa'))
                     : ListView.builder(
                         controller: scrollCtrl,
                         itemCount: santris.length,
@@ -279,7 +275,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final guruName = _guruData?['name'] ?? 'Ustadz';
+    final guruName = _guruData?['name'] ?? 'Guru';
     final guruEmail = _guruData?['email'] ?? '';
     final guruNip = _guruData?['nip'] as String?;
 
@@ -290,7 +286,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
-            child: AppBadge(label: 'Ustadz', variant: BadgeVariant.success),
+            child: AppBadge(label: 'Guru', variant: BadgeVariant.success),
           ),
         ],
       ),
@@ -351,7 +347,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                         ),
                         const Spacer(),
                         Text(
-                          '$_santriCount Santri',
+                          '$_santriCount Siswa',
                           style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
                         ),
                       ],
@@ -474,7 +470,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '$count Santri',
+                '$count Siswa',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
               ),
             ),

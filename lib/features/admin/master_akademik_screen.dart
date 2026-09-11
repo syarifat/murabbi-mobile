@@ -40,7 +40,7 @@ class MasterAkademikScreen extends StatelessWidget {
             _buildMenuCard(
               context,
               label: 'Pengguna',
-              sub: 'Kelola akun Guru/Ustadz & Admin',
+              sub: 'Kelola akun Guru & Admin',
               icon: Icons.people,
               color: AppColors.primary,
               onTap: () => Navigator.push(
@@ -59,7 +59,7 @@ class MasterAkademikScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'DATA SANTRI',
+              'DATA SISWA',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -69,8 +69,8 @@ class MasterAkademikScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _buildMenuCard(
               context,
-              label: 'Data Santri',
-              sub: 'Lihat & tambah data lengkap santri + ortu',
+              label: 'Data Siswa',
+              sub: 'Lihat & tambah data lengkap siswa + ortu',
               icon: Icons.school,
               color: AppColors.gold,
               onTap: () => Navigator.push(
@@ -103,7 +103,7 @@ class MasterAkademikScreen extends StatelessWidget {
             _buildMenuCard(
               context,
               label: 'Rombel Kelas',
-              sub: 'Assign santri ke kelas per tahun ajaran',
+              sub: 'Assign siswa ke kelas per tahun ajaran',
               icon: Icons.group_work,
               color: Colors.teal,
               onTap: () => Navigator.push(

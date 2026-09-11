@@ -29,7 +29,7 @@ class SetoranModel {
     return SetoranModel(
       id: json['id'] as int,
       santriId: json['santri_id'] as int,
-      namaSantri: json['santri'] != null ? json['santri']['nama_lengkap'] as String : (json['nama_santri'] as String? ?? 'Santri'),
+      namaSantri: json['santri'] != null ? json['santri']['nama_lengkap'] as String : (json['nama_santri'] as String? ?? 'Siswa'),
       namaKelas: json['santri'] != null && json['santri']['kelas'] != null ? json['santri']['kelas']['nama_kelas'] as String : (json['nama_kelas'] as String? ?? '7A'),
       surahId: json['surah_id'] as int? ?? 78,
       namaSurah: json['surah'] != null ? json['surah']['nama_latin'] as String : (json['nama_surah'] as String? ?? "An-Naba'"),

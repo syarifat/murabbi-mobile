@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
@@ -149,22 +150,32 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
 
       await ApiClient().dio.post(ApiEndpoints.santrisAdmin, data: payload);
 
-      if (!mounted) return;
-      Navigator.pop(context);
-      _clearForm();
-      _loadData();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Santri berhasil ditambahkan'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.primary,
+            content: Text('Siswa berhasil ditambahkan'),
+          ),
+        );
+        _clearForm();
+        _loadData();
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $e'), backgroundColor: AppColors.red),
-      );
+      if (mounted) {
+        String msg = 'Gagal menambahkan siswa';
+        if (e is DioException && e.response?.data?['message'] != null) {
+          msg = e.response!.data['message'].toString();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.red,
+            content: Text(msg),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -193,7 +204,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tambah Data Santri',
+                      'Tambah Data Siswa',
                       style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     IconButton(
@@ -207,17 +218,17 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                 ),
                 const Divider(),
 
-                // Data Santri
-                _sectionTitle('DATA SANTRI'),
+                // Data Siswa
+                _sectionTitle('DATA SISWA'),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Nama lengkap santri',
+                  hint: 'Nama lengkap siswa',
                   controller: _namaCtrl,
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'NIS',
-                  hint: 'Nomor Induk Santri',
+                  hint: 'Nomor Induk Siswa',
                   controller: _nisCtrl,
                 ),
                 const SizedBox(height: 12),
@@ -358,7 +369,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: Text(
-          'Master Data Santri',
+          'Master Data Siswa',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [

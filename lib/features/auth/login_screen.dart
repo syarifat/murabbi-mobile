@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 12),
             _buildRoleQuickItem(
-              'Guru / Ustadz',
+              'Guru',
               'zidane@murabbi.id',
               AppColors.primary,
               AppColors.primaryPale,
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'Untuk pertanyaan atau pendaftaran santri baru, hubungi Sekretariat Sekolah: +62 812-3456-7890.',
+              'Untuk pertanyaan atau pendaftaran siswa baru, hubungi Sekretariat Sekolah: +62 812-3456-7890.',
               style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
             ),
           ],
@@ -612,7 +612,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Data hafalan santri tersinkronisasi otomatis dengan server sekolah.',
+                                            'Data hafalan siswa tersinkronisasi otomatis dengan server sekolah.',
                                             style: GoogleFonts.inter(
                                               fontSize: 10,
                                               color: const Color(0xFF047857),
@@ -635,7 +635,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           const SizedBox(height: 24),
                           Text(
-                            'Belum memiliki akun santri atau pengampu?',
+                            'Belum memiliki akun siswa atau pengampu?',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: AppColors.muted,

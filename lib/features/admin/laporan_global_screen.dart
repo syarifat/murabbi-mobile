@@ -120,7 +120,7 @@ class _LaporanGlobalScreenState extends State<LaporanGlobalScreen> {
                     const SizedBox(height: 18),
                     Row(
                       children: [
-                        _buildKpi('Total Santri', '$totalSantri', Icons.school, AppColors.primary),
+                        _buildKpi('Total Siswa', '$totalSantri', Icons.school, AppColors.primary),
                         const SizedBox(width: 12),
                         _buildKpi('Avg Kelancaran', '$avgPct%', Icons.bar_chart, AppColors.primaryMid),
                       ],
@@ -169,7 +169,7 @@ class _LaporanGlobalScreenState extends State<LaporanGlobalScreen> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
             ),
             child: Row(
-              children: ['Kelas', 'Santri', 'Lancar', '%', 'Ulang']
+              children: ['Kelas', 'Siswa', 'Lancar', '%', 'Ulang']
                   .map((col) => Expanded(child: Text(col, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white))))
                   .toList(),
             ),

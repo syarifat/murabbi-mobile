@@ -149,7 +149,7 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Data Santri Terdaftar',
+                        'Data Siswa Terdaftar',
                         style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                     ],
@@ -359,7 +359,7 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
     final santris = (_data['santris'] as List?) ?? [];
 
     // Build wali dari text
-    String waliDariText = 'Belum ada santri';
+    String waliDariText = 'Belum ada siswa';
     if (santris.isNotEmpty) {
       final names = santris.map((s) {
         final nama = s['nama_lengkap'] ?? '';
@@ -445,7 +445,7 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                     if (santris.isNotEmpty) ...[
                       _buildProfileItem(
                         Icons.family_restroom,
-                        'Santri Terdaftar',
+                        'Siswa Terdaftar',
                         '${santris.length} Anak (${santris.map((s) => s['nama_lengkap'] ?? '').join(', ')}) · Ketuk untuk detail',
                         onTap: () => _showSantriDetailPopup(context, santris),
                       ),
@@ -473,7 +473,7 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                     _buildProfileItem(
                       Icons.picture_as_pdf,
                       'Laporan Mutaba\'ah Hafalan',
-                      'Buka Grafik & Capaian Santri',
+                      'Buka Grafik & Capaian Siswa',
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(

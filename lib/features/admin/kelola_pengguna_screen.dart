@@ -25,7 +25,7 @@ class _KelolaPenggunaScreenState extends State<KelolaPenggunaScreen> {
   bool _isLoading = false;
 
   final List<Map<String, String>> _roleOptions = [
-    {'value': 'guru', 'label': 'Guru / Ustadz'},
+    {'value': 'guru', 'label': 'Guru'},
     {'value': 'admin', 'label': 'Admin'},
     {'value': 'ortu', 'label': 'Orang Tua'},
   ];

@@ -160,7 +160,7 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                             ],
                           ),
                           AppBadge(
-                            label: '$count Santri',
+                            label: '$count Siswa',
                             variant: BadgeVariant.neutral,
                           ),
                         ],
@@ -292,7 +292,7 @@ class _OrtuDashboardScreenState extends State<OrtuDashboardScreen> {
                                   child: Text(
                                     activeSantri != null
                                         ? 'Progres Hafalan · ${activeSantri['nama_lengkap']}'
-                                        : 'Progres Tahfidz Santri',
+                                        : 'Progres Tahfidz Siswa',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,

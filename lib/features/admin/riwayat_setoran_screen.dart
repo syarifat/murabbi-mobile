@@ -480,7 +480,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
               const SizedBox(width: 12),
               const Icon(Icons.person_outline, size: 16, color: AppColors.muted),
               const SizedBox(width: 6),
-              Text('Ustadz: ${s['guru_nama']}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted)),
+              Text('Guru: ${s['guru_nama']}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted)),
             ],
           ),
           if ((s['catatan'] as String).isNotEmpty) ...[

@@ -63,7 +63,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
   }
 
   void _showDetailModal(BuildContext context, dynamic feed) {
-    final santriName = feed['santri']?['nama_lengkap'] ?? 'Santri';
+    final santriName = feed['santri']?['nama_lengkap'] ?? 'Siswa';
     final kelasName = feed['santri']?['kelas']?['nama_kelas'] ?? '-';
     final surahName = feed['surah']?['nama_latin'] ?? 'Surah';
     final ayat = "${feed['ayat_mulai'] ?? 1}-${feed['ayat_selesai'] ?? 20}";
@@ -100,13 +100,13 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
             ),
             const Divider(),
             const SizedBox(height: 8),
-            _buildDetailRow('Santri', santriName),
+            _buildDetailRow('Siswa', santriName),
             _buildDetailRow('Kelas', kelasName),
             _buildDetailRow('Surah & Ayat', '$surahName: Ayat $ayat'),
             _buildDetailRow('Status Tajwid', status.toString().toUpperCase()),
             const SizedBox(height: 12),
             Text(
-              'Catatan Evaluasi Ustadz:',
+              'Catatan Evaluasi Guru:',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -243,7 +243,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${_kelasBinaan.length} Kelas · $_totalSantri Santri',
+                  '${_kelasBinaan.length} Kelas · $_totalSantri Siswa',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -331,7 +331,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          '$santriCount Santri',
+                          '$santriCount Siswa',
                           style: GoogleFonts.inter(
                             fontSize: 11.5,
                             color: Colors.white,
@@ -442,7 +442,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                             ],
                           ),
                           const AppBadge(
-                            label: 'Guru / Ustadz',
+                            label: 'Guru',
                             variant: BadgeVariant.success,
                           ),
                         ],
@@ -488,7 +488,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '$_sudahSetor Santri',
+                                    '$_sudahSetor Siswa',
                                     style: GoogleFonts.inter(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
@@ -541,7 +541,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${math.max(0, _totalSantri - _sudahSetor)} Santri',
+                                    '${math.max(0, _totalSantri - _sudahSetor)} Siswa',
                                     style: GoogleFonts.inter(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
@@ -585,7 +585,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Sesi Terakhir Santri',
+                            'Sesi Terakhir Siswa',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -627,7 +627,7 @@ class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
                       else
                         ..._recentFeeds.map((feed) {
                           final sName =
-                              feed['santri']?['nama_lengkap'] ?? 'Santri';
+                              feed['santri']?['nama_lengkap'] ?? 'Siswa';
                           final surah = feed['surah']?['nama_latin'] ?? 'Surah';
                           final ayat =
                               '${feed['ayat_mulai']}-${feed['ayat_selesai']}';
