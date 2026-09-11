@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../../widgets/app_dropdown.dart';
 
 class MappingGuruScreen extends StatefulWidget {
   const MappingGuruScreen({super.key});
@@ -116,64 +117,44 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                 ),
                 const Divider(),
                 const SizedBox(height: 8),
-                // Pilih Guru
-                Text('GURU', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      isExpanded: true,
-                      hint: const Text('Pilih Guru'),
-                      value: selectedGuruId,
-                      items: _gurus.map((g) => DropdownMenuItem(
-                        value: g['id'] as int,
-                        child: Text(g['name'] as String),
-                      )).toList(),
-                      onChanged: (v) => setModal(() {
-                        selectedGuruId = v;
-                        selectedKelasId = null; // Reset kelas when guru changes
-                      }),
-                    ),
-                  ),
+                AppDropdown<int>(
+                  label: 'GURU',
+                  hint: 'Pilih Guru',
+                  leadIcon: Icons.person_outline_rounded,
+                  leadIconColor: AppColors.primary,
+                  value: selectedGuruId,
+                  items: _gurus.map((g) => AppDropdownItem<int>(
+                    value: g['id'] as int,
+                    label: g['name'] as String,
+                    initial: ((g['name'] as String?)?.isNotEmpty == true ? g['name'][0] : 'G').toUpperCase(),
+                    iconColor: AppColors.primary,
+                  )).toList(),
+                  onChanged: (v) => setModal(() {
+                    selectedGuruId = v;
+                    selectedKelasId = null;
+                  }),
                 ),
-                const SizedBox(height: 12),
-                // Pilih Kelas
-                Text('KELAS / ROMBEL', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      isExpanded: true,
-                      hint: Text(availableKelas.isEmpty ? 'Pilih guru dulu' : 'Pilih Kelas'),
-                      value: selectedKelasId,
-                      items: availableKelas.map((k) => DropdownMenuItem(
-                        value: k['id'] as int,
-                        child: Text(k['nama'] as String),
-                      )).toList(),
-                      onChanged: availableKelas.isEmpty ? null : (v) => setModal(() => selectedKelasId = v),
-                    ),
-                  ),
+                const SizedBox(height: 14),
+                AppDropdown<int>(
+                  label: 'KELAS / ROMBEL',
+                  hint: 'Pilih Kelas',
+                  disabledHint: selectedGuruId == null ? 'Pilih guru dulu' : 'Tidak ada kelas tersedia',
+                  enabled: selectedGuruId != null && availableKelas.isNotEmpty,
+                  leadIcon: Icons.school_outlined,
+                  leadIconColor: const Color(0xFF0284C7),
+                  value: selectedKelasId,
+                  items: availableKelas.map((k) => AppDropdownItem<int>(
+                    value: k['id'] as int,
+                    label: k['nama'] as String,
+                    icon: Icons.meeting_room_outlined,
+                    iconColor: const Color(0xFF0284C7),
+                  )).toList(),
+                  helperText: (availableKelas.isEmpty && selectedGuruId != null)
+                      ? 'Semua kelas sudah dipetakan ke guru lain'
+                      : null,
+                  helperTextColor: AppColors.red,
+                  onChanged: (v) => setModal(() => selectedKelasId = v),
                 ),
-                if (availableKelas.isEmpty && selectedGuruId != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      'Semua kelas sudah dipetakan ke guru lain',
-                      style: GoogleFonts.inter(fontSize: 10, color: AppColors.red),
-                    ),
-                  ),
                 const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
@@ -231,27 +212,19 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
               ),
               const Divider(),
               const SizedBox(height: 8),
-              // Pilih Guru
-              Text('GURU', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    isExpanded: true,
-                    value: selectedGuruId,
-                    items: _gurus.map((g) => DropdownMenuItem(
-                      value: g['id'] as int,
-                      child: Text(g['name'] as String),
-                    )).toList(),
-                    onChanged: (v) => setModal(() => selectedGuruId = v!),
-                  ),
-                ),
+              AppDropdown<int>(
+                label: 'GURU',
+                hint: 'Pilih Guru',
+                leadIcon: Icons.person_outline_rounded,
+                leadIconColor: AppColors.primary,
+                value: selectedGuruId,
+                items: _gurus.map((g) => AppDropdownItem<int>(
+                  value: g['id'] as int,
+                  label: g['name'] as String,
+                  initial: ((g['name'] as String?)?.isNotEmpty == true ? g['name'][0] : 'G').toUpperCase(),
+                  iconColor: AppColors.primary,
+                )).toList(),
+                onChanged: (v) => setModal(() => selectedGuruId = v!),
               ),
               const SizedBox(height: 18),
               SizedBox(

@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/app_dropdown.dart';
 
 class MasterSantriScreen extends StatefulWidget {
   const MasterSantriScreen({super.key});
@@ -296,33 +297,31 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                   ),
                 ] else ...[
                   const SizedBox(height: 12),
-                  Text('PILIH ORANG TUA', style: _labelStyle()),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        isExpanded: true,
-                        hint: const Text('Pilih ortu'),
-                        value: _selectedOrtuId,
-                        items: [
-                          const DropdownMenuItem(value: null, child: Text('- Pilih -')),
-                          ..._ortuList.map((o) => DropdownMenuItem(
-                            value: o['id'] as int,
-                            child: Text('${o['nama']} (${o['santris_count']} anak)'),
-                          )),
-                        ],
-                        onChanged: (v) {
-                          setModal(() => _selectedOrtuId = v);
-                          setState(() => _selectedOrtuId = v);
-                        },
+                  AppDropdown<int?>(
+                    label: 'PILIH ORANG TUA',
+                    hint: 'Pilih Orang Tua / Wali',
+                    leadIcon: Icons.family_restroom_rounded,
+                    leadIconColor: const Color(0xFFD97706),
+                    value: _selectedOrtuId,
+                    items: [
+                      const AppDropdownItem<int?>(
+                        value: null,
+                        label: '- Belum Ditentukan -',
+                        icon: Icons.remove_circle_outline,
+                        iconColor: AppColors.muted,
                       ),
-                    ),
+                      ..._ortuList.map((o) => AppDropdownItem<int?>(
+                        value: o['id'] as int,
+                        label: o['nama'] as String,
+                        subtitle: '${o['santris_count']} anak terdaftar',
+                        initial: ((o['nama'] as String?)?.isNotEmpty == true ? o['nama'][0] : 'O').toUpperCase(),
+                        iconColor: const Color(0xFFD97706),
+                      )),
+                    ],
+                    onChanged: (v) {
+                      setModal(() => _selectedOrtuId = v);
+                      setState(() => _selectedOrtuId = v);
+                    },
                   ),
                 ],
 
@@ -355,13 +354,6 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
     );
   }
 
-  TextStyle _labelStyle() {
-    return GoogleFonts.inter(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      color: AppColors.muted,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

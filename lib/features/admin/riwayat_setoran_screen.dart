@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../../widgets/app_dropdown.dart';
 
 class RiwayatSetoranScreen extends StatefulWidget {
   const RiwayatSetoranScreen({super.key});
@@ -121,27 +122,19 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
               ),
               const Divider(),
               const SizedBox(height: 8),
-              // Filter Kelas
-              Text('KELAS', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted)),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<Map<String, dynamic>?>(
-                    isExpanded: true,
-                    value: _selectedRombel ?? _rombels.first,
-                    items: _rombels.map((r) => DropdownMenuItem(
-                      value: r,
-                      child: Text(r['nama_kelas'] ?? '-'),
-                    )).toList(),
-                    onChanged: (v) => setModal(() => _selectedRombel = v),
-                  ),
-                ),
+              AppDropdown<Map<String, dynamic>?>(
+                label: 'KELAS',
+                hint: 'Semua Kelas',
+                leadIcon: Icons.school_outlined,
+                leadIconColor: AppColors.primary,
+                value: _selectedRombel ?? (_rombels.isNotEmpty ? _rombels.first : null),
+                items: _rombels.map((r) => AppDropdownItem<Map<String, dynamic>?>(
+                  value: r,
+                  label: r['nama_kelas'] ?? '-',
+                  icon: Icons.meeting_room_outlined,
+                  iconColor: AppColors.primary,
+                )).toList(),
+                onChanged: (v) => setModal(() => _selectedRombel = v),
               ),
               const SizedBox(height: 16),
               // Filter Tanggal
