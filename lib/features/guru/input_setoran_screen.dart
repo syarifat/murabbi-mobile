@@ -103,9 +103,23 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
           (setoransRes.data['data'] as List?) ??
           [];
       for (final item in setorList) {
-        final sId = (item['santri_id'] as num?)?.toInt();
-        if (sId != null) {
-          todaySetorIds.add(sId);
+        final waktuStr = item['waktu_setor']?.toString() ?? '';
+        bool isToday = waktuStr.startsWith(todayStr);
+        if (!isToday && waktuStr.isNotEmpty) {
+          final parsedDate = DateTime.tryParse(waktuStr);
+          if (parsedDate != null) {
+            final local = parsedDate.toLocal();
+            final localStr = '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+            if (localStr == todayStr) {
+              isToday = true;
+            }
+          }
+        }
+        if (isToday) {
+          final sId = (item['santri_id'] as num?)?.toInt();
+          if (sId != null) {
+            todaySetorIds.add(sId);
+          }
         }
       }
     } catch (e) {
@@ -479,7 +493,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
             final int sudahCount = _santriList.where((s) {
               final sId = (s['id'] as num?)?.toInt();
-              return (sId != null && _santriSudahSetorHariIniIds.contains(sId)) || s['sudah_setor_hari_ini'] == true;
+              return sId != null && _santriSudahSetorHariIniIds.contains(sId);
             }).length;
             final int belumCount = _santriList.length - sudahCount;
 
@@ -570,7 +584,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                                   itemBuilder: (ctx, i) {
                                     final s = filteredSantris[i];
                                     final sId = (s['id'] as num?)?.toInt();
-                                    final bool sudahSetor = (sId != null && _santriSudahSetorHariIniIds.contains(sId)) || s['sudah_setor_hari_ini'] == true;
+                                    final bool sudahSetor = sId != null && _santriSudahSetorHariIniIds.contains(sId);
                                     final bool isSelected = _selectedSantriId == sId;
 
                                     return Container(
