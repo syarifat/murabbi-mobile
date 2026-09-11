@@ -22,6 +22,7 @@ class ApiEndpoints {
   static String get login => '$baseUrl/login';
   static String get logout => '$baseUrl/logout';
   static String get me => '$baseUrl/me';
+  static String get changePassword => '$baseUrl/change-password';
 
   // Guru
   static String get guruDashboard => '$baseUrl/guru/dashboard';
@@ -42,6 +43,7 @@ class ApiEndpoints {
   // Admin
   static String get adminDashboard => '$baseUrl/admin/dashboard';
   static String get users => '$baseUrl/admin/users';
+  static String resetUserPassword(int id) => '$baseUrl/admin/users/$id/reset-password';
   static String get santrisAdmin => '$baseUrl/admin/santris';
   static String get mappingGuru => '$baseUrl/admin/mapping';
   static String get laporanGlobal => '$baseUrl/admin/laporan';

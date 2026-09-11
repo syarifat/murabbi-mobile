@@ -262,11 +262,11 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
 
       await ApiClient().dio.post(ApiEndpoints.users, data: payload);
 
-      if (!mounted) return;
-      Navigator.pop(ctx);
+      if (ctx.mounted) Navigator.pop(ctx);
       await _loadUsers();
       _clearForm();
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$role berhasil ditambahkan'),
@@ -274,11 +274,135 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal: $e'), backgroundColor: AppColors.red),
       );
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _confirmResetPassword(Map<String, dynamic> u) async {
+    final name = u['name'] ?? 'Pengguna';
+    final userId = u['id'];
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: AppColors.goldPale,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 28),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Reset Kata Sandi?',
+              style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted, height: 1.4),
+                children: [
+                  const TextSpan(text: 'Kata sandi untuk '),
+                  TextSpan(
+                    text: '$name',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.dark),
+                  ),
+                  const TextSpan(text: ' akan direset menjadi default: '),
+                  const TextSpan(
+                    text: '"murabbiapp"',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Batal', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      'Reset Sandi',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || userId == null) return;
+
+    try {
+      final response = await ApiClient().dio.post(
+        ApiEndpoints.resetUserPassword(userId as int),
+      );
+
+      final msg = response.data['message']?.toString() ?? 'Kata sandi berhasil direset menjadi "murabbiapp".';
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  msg,
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mereset kata sandi: $e'),
+          backgroundColor: AppColors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 
@@ -353,7 +477,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: _users.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, index) => const SizedBox(height: 10),
                         itemBuilder: (context, i) {
                           final u = _users[i];
                           return _userCard(u);
@@ -372,8 +496,12 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
 
   Widget _userCard(Map<String, dynamic> u) {
     final role = u['role'] as String;
-    final color = role == 'admin' ? AppColors.blue : AppColors.primary;
-    final bg = role == 'admin' ? AppColors.bluePale : AppColors.primaryPale;
+    final color = role == 'admin'
+        ? AppColors.blue
+        : (role == 'ortu' ? const Color(0xFFD97706) : AppColors.primary);
+    final bg = role == 'admin'
+        ? AppColors.bluePale
+        : (role == 'ortu' ? AppColors.goldPale : AppColors.primaryPale);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -414,7 +542,33 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
           ),
           AppBadge(
             label: u['roleLabel'] as String,
-            variant: role == 'admin' ? BadgeVariant.blue : BadgeVariant.success,
+            variant: role == 'admin'
+                ? BadgeVariant.blue
+                : (role == 'ortu' ? BadgeVariant.warning : BadgeVariant.success),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _confirmResetPassword(u),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Tooltip(
+                  message: 'Reset Password ke "murabbiapp"',
+                  child: Icon(
+                    Icons.key_rounded,
+                    size: 18,
+                    color: Color(0xFFD97706),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

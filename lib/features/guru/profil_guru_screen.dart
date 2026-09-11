@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../widgets/app_badge.dart';
+import '../../widgets/change_password_dialog.dart';
 import '../auth/welcome_screen.dart';
 
 class ProfilGuruScreen extends StatefulWidget {
@@ -389,7 +390,14 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                       ..._kelasBinaan.map((kelas) => _buildKelasCard(kelas)),
 
                     const SizedBox(height: 16),
-                    _buildProfileItem(Icons.lock_outline, 'Email Akun', guruEmail),
+                    _buildProfileItem(Icons.email_outlined, 'Email Akun', guruEmail),
+                    const SizedBox(height: 10),
+                    _buildProfileItem(
+                      Icons.lock_reset,
+                      'Ganti Kata Sandi',
+                      'Perbarui kata sandi login Anda',
+                      onTap: () => showChangePasswordDialog(context),
+                    ),
                     const SizedBox(height: 24),
 
                     // Logout Button
@@ -495,29 +503,34 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     );
   }
 
-  Widget _buildProfileItem(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.dark)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted, fontWeight: FontWeight.w500)),
-              ],
+  Widget _buildProfileItem(IconData icon, String title, String subtitle, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.dark)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted, fontWeight: FontWeight.w500)),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (onTap != null)
+              const Icon(Icons.chevron_right, color: AppColors.muted, size: 18),
+          ],
+        ),
       ),
     );
   }

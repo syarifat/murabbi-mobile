@@ -8,6 +8,7 @@ import 'master_tahun_ajaran_screen.dart';
 import 'rombel_screen.dart';
 import 'daftar_surat_screen.dart';
 import 'riwayat_setoran_screen.dart';
+import '../../widgets/change_password_dialog.dart';
 
 class MasterAkademikScreen extends StatelessWidget {
   const MasterAkademikScreen({super.key});
@@ -46,6 +47,15 @@ class MasterAkademikScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => const MasterPenggunaScreen()),
               ),
+            ),
+            const SizedBox(height: 10),
+            _buildMenuCard(
+              context,
+              label: 'Ganti Kata Sandi',
+              sub: 'Perbarui kata sandi akun Admin saat ini',
+              icon: Icons.lock_reset,
+              color: Colors.teal,
+              onTap: () => showChangePasswordDialog(context),
             ),
             const SizedBox(height: 24),
             Text(

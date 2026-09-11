@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
+import '../../widgets/change_password_dialog.dart';
 import '../auth/welcome_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -181,7 +182,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 label: 'Super Admin',
                                 variant: BadgeVariant.blue,
                               ),
-                              const SizedBox(width: 6),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.lock_reset,
+                                  size: 20,
+                                  color: AppColors.primary,
+                                ),
+                                tooltip: 'Ganti Kata Sandi',
+                                onPressed: () => showChangePasswordDialog(context),
+                              ),
                               IconButton(
                                 icon: const Icon(
                                   Icons.logout,

@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
+import '../../widgets/change_password_dialog.dart';
 import '../auth/welcome_screen.dart';
 import 'rekap_perkembangan_screen.dart';
 
@@ -227,6 +228,15 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                       Icons.phone_android,
                       'Nomor WhatsApp',
                       noHp != null && noHp.isNotEmpty ? '$noHp (Terverifikasi)' : '-',
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Ganti Kata Sandi
+                    _buildProfileItem(
+                      Icons.lock_reset,
+                      'Ganti Kata Sandi',
+                      'Perbarui kata sandi login Anda',
+                      onTap: () => showChangePasswordDialog(context),
                     ),
                     const SizedBox(height: 10),
 
