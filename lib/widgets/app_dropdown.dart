@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../core/theme/app_colors.dart';
 
 class AppDropdownItem<T> {
@@ -29,6 +30,8 @@ class AppDropdown<T> extends StatelessWidget {
   final IconData? leadIcon;
   final Color? leadIconColor;
   final bool enabled;
+  final bool isLoading;
+  final String? loadingHint;
   final String? disabledHint;
   final String? helperText;
   final Color? helperTextColor;
@@ -44,6 +47,8 @@ class AppDropdown<T> extends StatelessWidget {
     this.leadIcon,
     this.leadIconColor,
     this.enabled = true,
+    this.isLoading = false,
+    this.loadingHint,
     this.disabledHint,
     this.helperText,
     this.helperTextColor,
@@ -78,78 +83,129 @@ class AppDropdown<T> extends StatelessWidget {
           ),
           const SizedBox(height: 6),
         ],
-        Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: !enabled
-                ? const Color(0xFFF1F5F9)
-                : (effectiveValue != null ? Colors.white : const Color(0xFFF8FAFC)),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: !enabled
-                  ? const Color(0xFFE2E8F0)
-                  : (effectiveValue != null
-                      ? primaryTheme.withValues(alpha: 0.5)
-                      : AppColors.border),
-              width: effectiveValue != null ? 1.5 : 1.0,
+        if (isLoading)
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: primaryTheme.withValues(alpha: 0.25),
+                width: 1.0,
+              ),
             ),
-            boxShadow: effectiveValue != null
-                ? [
-                    BoxShadow(
-                      color: primaryTheme.withValues(alpha: 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : null,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              isExpanded: true,
-              value: effectiveValue,
-              borderRadius: BorderRadius.circular(16),
-              dropdownColor: Colors.white,
-              elevation: 6,
-              menuMaxHeight: 320,
-              icon: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: enabled ? primaryTheme.withValues(alpha: 0.08) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: enabled ? primaryTheme : AppColors.muted,
-                  size: 18,
-                ),
-              ),
-              hint: Row(
-                children: [
-                  if (leadIcon != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: primaryTheme.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Icon(leadIcon, size: 14, color: primaryTheme),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                if (leadIcon != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: primaryTheme.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Text(
-                      enabled ? hint : (disabledHint ?? hint),
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppColors.muted,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Icon(leadIcon, size: 14, color: primaryTheme.withValues(alpha: 0.7)),
                   ),
+                  const SizedBox(width: 8),
                 ],
+                Expanded(
+                  child: Text(
+                    loadingHint ?? 'Memuat data...',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: LoadingAnimationWidget.twoRotatingArc(
+                    color: primaryTheme,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: !enabled || items.isEmpty
+                  ? const Color(0xFFF1F5F9)
+                  : (effectiveValue != null ? Colors.white : const Color(0xFFF8FAFC)),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: !enabled || items.isEmpty
+                    ? const Color(0xFFE2E8F0)
+                    : (effectiveValue != null
+                        ? primaryTheme.withValues(alpha: 0.5)
+                        : AppColors.border),
+                width: effectiveValue != null ? 1.5 : 1.0,
               ),
+              boxShadow: effectiveValue != null
+                  ? [
+                      BoxShadow(
+                        color: primaryTheme.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
+                  : null,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<T>(
+                isExpanded: true,
+                value: effectiveValue,
+                borderRadius: BorderRadius.circular(16),
+                dropdownColor: Colors.white,
+                elevation: 6,
+                menuMaxHeight: 320,
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: enabled && items.isNotEmpty
+                        ? primaryTheme.withValues(alpha: 0.08)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: enabled && items.isNotEmpty ? primaryTheme : AppColors.muted,
+                    size: 18,
+                  ),
+                ),
+                hint: Row(
+                  children: [
+                    if (leadIcon != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: primaryTheme.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(leadIcon, size: 14, color: primaryTheme),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Text(
+                        enabled
+                            ? (items.isEmpty ? (disabledHint ?? 'Tidak ada data tersedia') : hint)
+                            : (disabledHint ?? hint),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               selectedItemBuilder: items.isEmpty
                   ? null
                   : (BuildContext ctx) {
@@ -273,7 +329,7 @@ class AppDropdown<T> extends StatelessWidget {
                   ),
                 );
               }).toList(),
-              onChanged: enabled ? onChanged : null,
+              onChanged: (enabled && items.isNotEmpty) ? onChanged : null,
             ),
           ),
         ),

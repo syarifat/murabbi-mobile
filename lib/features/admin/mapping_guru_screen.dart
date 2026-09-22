@@ -18,11 +18,15 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
   List<Map<String, dynamic>> _gurus = [];
   List<Map<String, dynamic>> _rombels = [];
   bool _isLoading = false;
+  bool _isLoadingGurus = false;
+  bool _isLoadingRombels = false;
 
   @override
   void initState() {
     super.initState();
     _loadMappings();
+    _loadGurus();
+    _loadRombels();
   }
 
   Future<void> _loadMappings() async {
@@ -49,20 +53,37 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
     }
   }
 
-  Future<void> _loadGurus() async {
+  Future<void> _loadGurus([void Function(void Function())? setModal]) async {
+    if (setModal != null) {
+      setModal(() => _isLoadingGurus = true);
+    } else if (mounted) {
+      setState(() => _isLoadingGurus = true);
+    }
     try {
       final resp = await ApiClient().dio.get(ApiEndpoints.users, queryParameters: {'role': 'Guru'});
-      setState(() {
-        _gurus = ((resp.data['data'] as List?) ?? []).map((u) {
-          return {'id': u['id'], 'name': u['name'] ?? '-'};
-        }).toList();
-      });
+      final list = ((resp.data['data'] as List?) ?? []).map((u) {
+        return {'id': u['id'], 'name': u['name'] ?? '-'};
+      }).toList();
+      if (mounted) {
+        setState(() => _gurus = list);
+      }
+      if (setModal != null) {
+        setModal(() => _gurus = list);
+      }
     } catch (e) {
       debugPrint('Error loading gurus: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingGurus = false);
+      if (setModal != null) setModal(() => _isLoadingGurus = false);
     }
   }
 
-  Future<void> _loadRombels() async {
+  Future<void> _loadRombels([void Function(void Function())? setModal]) async {
+    if (setModal != null) {
+      setModal(() => _isLoadingRombels = true);
+    } else if (mounted) {
+      setState(() => _isLoadingRombels = true);
+    }
     try {
       final resp = await ApiClient().dio.get(ApiEndpoints.rombelList);
       final rombels = resp.data['data']['rombels'] as List<dynamic>? ?? [];
@@ -70,23 +91,29 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
       // Get already mapped kelas ids
       final mappedKelasIds = _mappings.map((m) => m['kelas_id']).toSet();
 
-      setState(() {
-        _rombels = rombels
-            .where((r) => !mappedKelasIds.contains(r['id']))
-            .map((r) => {
-                  'id': r['id'],
-                  'nama': r['nama_kelas'] ?? '-',
-                })
-            .toList();
-      });
+      final list = rombels
+          .where((r) => !mappedKelasIds.contains(r['id']))
+          .map((r) => {
+                'id': r['id'],
+                'nama': r['nama_kelas'] ?? '-',
+              })
+          .toList();
+
+      if (mounted) {
+        setState(() => _rombels = list);
+      }
+      if (setModal != null) {
+        setModal(() => _rombels = list);
+      }
     } catch (e) {
       debugPrint('Error loading rombels: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingRombels = false);
+      if (setModal != null) setModal(() => _isLoadingRombels = false);
     }
   }
 
   void _showAddModal() {
-    _loadGurus();
-    _loadRombels();
     int? selectedGuruId;
     int? selectedKelasId;
 
@@ -98,6 +125,12 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) {
+          if (_gurus.isEmpty && !_isLoadingGurus) {
+            _loadGurus((fn) => setModal(fn));
+          }
+          if (_rombels.isEmpty && !_isLoadingRombels) {
+            _loadRombels((fn) => setModal(fn));
+          }
           final availableKelas = selectedGuruId != null ? _rombels : <Map<String, dynamic>>[];
 
           return Padding(
@@ -123,6 +156,8 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                   hint: 'Pilih Guru',
                   leadIcon: Icons.person_outline_rounded,
                   leadIconColor: AppColors.primary,
+                  isLoading: _isLoadingGurus || (_gurus.isEmpty && _isLoading),
+                  loadingHint: 'Memuat data guru...',
                   value: selectedGuruId,
                   items: _gurus.map((g) => AppDropdownItem<int>(
                     value: g['id'] as int,
@@ -141,6 +176,8 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
                   hint: 'Pilih Kelas',
                   disabledHint: selectedGuruId == null ? 'Pilih guru dulu' : 'Tidak ada kelas tersedia',
                   enabled: selectedGuruId != null && availableKelas.isNotEmpty,
+                  isLoading: selectedGuruId != null && _isLoadingRombels,
+                  loadingHint: 'Memuat data kelas...',
                   leadIcon: Icons.school_outlined,
                   leadIconColor: const Color(0xFF0284C7),
                   value: selectedKelasId,
@@ -184,7 +221,6 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
   }
 
   void _showEditModal(Map<String, dynamic> mapping) {
-    _loadGurus();
     int selectedGuruId = mapping['guru_id'] as int;
     int selectedKelasId = mapping['kelas_id'] as int;
 
@@ -195,38 +231,44 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => Padding(
-          padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Edit Mapping', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 8),
-              AppDropdown<int>(
-                label: 'GURU',
-                hint: 'Pilih Guru',
-                leadIcon: Icons.person_outline_rounded,
-                leadIconColor: AppColors.primary,
-                value: selectedGuruId,
-                items: _gurus.map((g) => AppDropdownItem<int>(
-                  value: g['id'] as int,
-                  label: g['name'] as String,
-                  initial: ((g['name'] as String?)?.isNotEmpty == true ? g['name'][0] : 'G').toUpperCase(),
-                  iconColor: AppColors.primary,
-                )).toList(),
-                onChanged: (v) => setModal(() => selectedGuruId = v!),
-              ),
+        builder: (ctx, setModal) {
+          if (_gurus.isEmpty && !_isLoadingGurus) {
+            _loadGurus((fn) => setModal(fn));
+          }
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Edit Mapping', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                AppDropdown<int>(
+                  label: 'GURU',
+                  hint: 'Pilih Guru',
+                  leadIcon: Icons.person_outline_rounded,
+                  leadIconColor: AppColors.primary,
+                  isLoading: _isLoadingGurus || (_gurus.isEmpty && _isLoading),
+                  loadingHint: 'Memuat data guru...',
+                  value: selectedGuruId,
+                  items: _gurus.map((g) => AppDropdownItem<int>(
+                    value: g['id'] as int,
+                    label: g['name'] as String,
+                    initial: ((g['name'] as String?)?.isNotEmpty == true ? g['name'][0] : 'G').toUpperCase(),
+                    iconColor: AppColors.primary,
+                  )).toList(),
+                  onChanged: (v) => setModal(() => selectedGuruId = v!),
+                ),
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -246,10 +288,11 @@ class _MappingGuruScreenState extends State<MappingGuruScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   Future<void> _saveMapping(int guruId, int kelasId) async {
     try {

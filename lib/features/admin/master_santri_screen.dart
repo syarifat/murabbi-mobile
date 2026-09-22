@@ -21,6 +21,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
   List<Map<String, dynamic>> _santris = [];
   List<Map<String, dynamic>> _ortuList = [];
   bool _isLoading = false;
+  bool _isLoadingOrtu = false;
 
   // Form controllers
   final _namaCtrl = TextEditingController();
@@ -96,6 +97,34 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
       debugPrint('Error loading data: $e');
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadOrtuList([void Function(void Function())? setModal]) async {
+    if (setModal != null) {
+      setModal(() => _isLoadingOrtu = true);
+    } else if (mounted) {
+      setState(() => _isLoadingOrtu = true);
+    }
+    try {
+      final ortuResp = await ApiClient().dio.get(ApiEndpoints.users, queryParameters: {'role': 'Ortu'});
+      final list = (ortuResp.data['data'] as List).map((o) {
+        return {
+          'id': o['id'],
+          'nama': o['name'],
+          'email': o['email'],
+          'hp': o['no_hp'] ?? '-',
+          'alamat': o['alamat'] ?? '-',
+          'santris_count': o['santris_count'],
+        };
+      }).toList();
+      if (mounted) setState(() => _ortuList = list);
+      if (setModal != null) setModal(() => _ortuList = list);
+    } catch (e) {
+      debugPrint('Error loading ortu: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingOrtu = false);
+      if (setModal != null) setModal(() => _isLoadingOrtu = false);
     }
   }
 
@@ -190,7 +219,11 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => Padding(
+        builder: (ctx, setModal) {
+          if (_ortuList.isEmpty && !_isLoadingOrtu) {
+            _loadOrtuList((fn) => setModal(fn));
+          }
+          return Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
@@ -242,45 +275,59 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Data Orang Tua
+                // Data Orang Tua / Wali
                 _sectionTitle('DATA ORANG TUA / WALI'),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Checkbox(
                         value: _createWaliAccount,
-                        activeColor: AppColors.gold,
+                        activeColor: AppColors.primary,
                         onChanged: (v) {
                           setModal(() => _createWaliAccount = v ?? true);
                           setState(() => _createWaliAccount = v ?? true);
                         },
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Buat akun orang tua baru', style: GoogleFonts.inter(fontSize: 13)),
-                  ],
+                      Expanded(
+                        child: Text(
+                          'Buatkan Akun Wali Baru',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 if (_createWaliAccount) ...[
                   const SizedBox(height: 12),
                   AppTextField(
-                    label: 'NAMA ORANG TUA',
+                    label: 'NAMA ORANG TUA / WALI',
                     hint: 'Nama lengkap ortu',
                     controller: _waliNamaCtrl,
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
                     label: 'EMAIL ORANG TUA',
-                    hint: 'email@contoh.com',
+                    hint: 'email.ortu@mail.com',
                     controller: _waliEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                    label: 'NO. HP',
-                    hint: '+62 812-3456-7890',
+                    label: 'NO. HP / WHATSAPP',
+                    hint: '08xxxxxxxxxx',
                     controller: _waliHpCtrl,
+                    keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
@@ -303,6 +350,8 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                     hint: 'Pilih Orang Tua / Wali',
                     leadIcon: Icons.family_restroom_rounded,
                     leadIconColor: const Color(0xFFD97706),
+                    isLoading: _isLoadingOrtu || (_ortuList.isEmpty && _isLoading),
+                    loadingHint: 'Memuat data orang tua...',
                     value: _selectedOrtuId,
                     items: [
                       const AppDropdownItem<int?>(
@@ -336,10 +385,11 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   void _showEditModal(Map<String, dynamic> s) {
     _namaCtrl.text = s['nama']?.toString() ?? '';
@@ -355,7 +405,11 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => Padding(
+        builder: (ctx, setModal) {
+          if (_ortuList.isEmpty && !_isLoadingOrtu) {
+            _loadOrtuList((fn) => setModal(fn));
+          }
+          return Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
@@ -425,6 +479,8 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                   hint: 'Pilih Orang Tua / Wali',
                   leadIcon: Icons.family_restroom_rounded,
                   leadIconColor: const Color(0xFFD97706),
+                  isLoading: _isLoadingOrtu || (_ortuList.isEmpty && _isLoading),
+                  loadingHint: 'Memuat data orang tua...',
                   value: editOrtuId,
                   items: [
                     const AppDropdownItem<int?>(
@@ -456,10 +512,11 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   Future<void> _updateSantri(BuildContext ctx, int santriId, int? waliId) async {
     if (_namaCtrl.text.trim().isEmpty || _nisCtrl.text.trim().isEmpty) {

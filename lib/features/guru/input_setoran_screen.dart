@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/app_loading.dart';
 import 'riwayat_setoran_screen.dart';
 
 class InputSetoranScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
 
   String _statusTajwid = 'lancar'; // lancar, kurang, mengulang
   bool _isLoading = false;
+  bool _isLoadingMasterData = true;
 
   List<dynamic> _kelasList = [];
   List<dynamic> _santriList = [];
@@ -182,6 +184,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _selectedSurahId = null;
         _selectedSurahName = 'Pilih Surah';
       }
+      _isLoadingMasterData = false;
     });
 
     if (_selectedSantriId != null) {
@@ -425,7 +428,19 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
               const Divider(),
               Expanded(
                 child: _kelasList.isEmpty
-                    ? const Center(child: Text('Memuat daftar kelas...'))
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppLoading.twoRotatingArc(size: 28),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Memuat daftar kelas...',
+                              style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      )
                     : ListView.builder(
                         controller: scrollCtrl,
                         shrinkWrap: true,
@@ -570,7 +585,21 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     const Divider(height: 16),
                     Expanded(
                       child: _santriList.isEmpty
-                          ? const Center(child: Text('Tidak ada siswa di kelas ini'))
+                          ? (_isLoadingMasterData
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AppLoading.twoRotatingArc(size: 28),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Memuat data siswa...',
+                                        style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : const Center(child: Text('Tidak ada siswa di kelas ini')))
                           : filteredSantris.isEmpty
                               ? Center(
                                   child: Text(
@@ -791,14 +820,28 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     const SizedBox(height: 8),
                     const Divider(height: 16),
                     Expanded(
-                      child: filteredSurahs.isEmpty
+                      child: _surahList.isEmpty
                           ? Center(
-                              child: Text(
-                                'Surah "$searchQuery" tidak ditemukan',
-                                style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AppLoading.twoRotatingArc(size: 28),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Memuat daftar surah...',
+                                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                                  ),
+                                ],
                               ),
                             )
-                          : ListView.builder(
+                          : filteredSurahs.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Surah "$searchQuery" tidak ditemukan',
+                                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.muted),
+                                  ),
+                                )
+                              : ListView.builder(
                               controller: scrollCtrl,
                               itemCount: filteredSurahs.length,
                               itemBuilder: (context, i) {
@@ -1121,8 +1164,13 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
               label: 'PILIH KELAS / ROMBEL',
               hint: _selectedKelasName,
               readOnly: true,
-              suffixIcon: const Icon(Icons.expand_more, color: AppColors.sub),
-              onTap: _showKelasPicker,
+              suffixIcon: _isLoadingMasterData
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: AppLoading.twoRotatingArc(size: 16),
+                    )
+                  : const Icon(Icons.expand_more, color: AppColors.sub),
+              onTap: _isLoadingMasterData ? null : _showKelasPicker,
             ),
             const SizedBox(height: 14),
 
@@ -1131,8 +1179,13 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
               label: 'PILIH SISWA',
               hint: _selectedSantriName,
               readOnly: true,
-              suffixIcon: const Icon(Icons.expand_more, color: AppColors.sub),
-              onTap: _showSantriPicker,
+              suffixIcon: _isLoadingMasterData
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: AppLoading.twoRotatingArc(size: 16),
+                    )
+                  : const Icon(Icons.expand_more, color: AppColors.sub),
+              onTap: (_isLoadingMasterData || _santriList.isEmpty) ? null : _showSantriPicker,
             ),
             if (_selectedSantriId != null && _santriSudahSetorHariIniIds.contains(_selectedSantriId)) ...[
               const SizedBox(height: 4),
@@ -1158,17 +1211,13 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
               label: 'PILIH SURAH',
               hint: _selectedSurahName,
               readOnly: true,
-              suffixIcon: _isLoadingHistory
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
+              suffixIcon: (_isLoadingMasterData || _isLoadingHistory)
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: AppLoading.twoRotatingArc(size: 16),
                     )
                   : const Icon(Icons.expand_more, color: AppColors.sub),
-              onTap: _showSurahPicker,
+              onTap: (_isLoadingMasterData || _surahList.isEmpty) ? null : _showSurahPicker,
               helperText: _isLoadingHistory
                   ? 'Memeriksa riwayat hafalan santri...'
                   : (_completedSurahIds.isNotEmpty

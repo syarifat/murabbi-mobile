@@ -20,6 +20,7 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
   DateTime? _tanggal;
   final _searchCtrl = TextEditingController();
   bool _isLoading = false;
+  bool _isLoadingRombels = false;
   int _currentPage = 1;
   int _totalPages = 1;
 
@@ -36,18 +37,26 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
     super.dispose();
   }
 
-  Future<void> _loadRombels() async {
+  Future<void> _loadRombels([void Function(void Function())? setModal]) async {
+    if (setModal != null) {
+      setModal(() => _isLoadingRombels = true);
+    } else if (mounted) {
+      setState(() => _isLoadingRombels = true);
+    }
     try {
       final resp = await ApiClient().dio.get(ApiEndpoints.rombelList);
       final rombels = resp.data['data']['rombels'] as List<dynamic>? ?? [];
-      setState(() {
-        _rombels = [
-          {'id': null, 'nama_kelas': 'Semua Kelas'},
-          ...rombels.map((r) => {'id': r['id'], 'nama_kelas': r['nama_kelas']}),
-        ];
-      });
+      final list = [
+        {'id': null, 'nama_kelas': 'Semua Kelas'},
+        ...rombels.map((r) => {'id': r['id'], 'nama_kelas': r['nama_kelas']}),
+      ];
+      if (mounted) setState(() => _rombels = list);
+      if (setModal != null) setModal(() => _rombels = list);
     } catch (e) {
       debugPrint('Error loading rombels: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingRombels = false);
+      if (setModal != null) setModal(() => _isLoadingRombels = false);
     }
   }
 
@@ -116,7 +125,11 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => Padding(
+        builder: (ctx, setModal) {
+          if (_rombels.isEmpty && !_isLoadingRombels) {
+            _loadRombels((fn) => setModal(fn));
+          }
+          return Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -136,6 +149,8 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
                 hint: 'Semua Kelas',
                 leadIcon: Icons.school_outlined,
                 leadIconColor: AppColors.primary,
+                isLoading: _isLoadingRombels || (_rombels.isEmpty && _isLoading),
+                loadingHint: 'Memuat daftar kelas...',
                 value: _selectedRombel ?? (_rombels.isNotEmpty ? _rombels.first : null),
                 items: _rombels.map((r) => AppDropdownItem<Map<String, dynamic>?>(
                   value: r,
@@ -230,10 +245,11 @@ class _RiwayatSetoranScreenState extends State<RiwayatSetoranScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
