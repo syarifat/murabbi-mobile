@@ -1,6 +1,7 @@
 // login_screen.dart
 // Identical Flutter implementation of Figma 0B. Login Screen (Pure Email, Offline Standalone)
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/network/api_client.dart';
@@ -75,12 +76,33 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => targetNav),
         (route) => false,
       );
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      String errorMessage = 'Email atau kata sandi salah. Silakan coba lagi.';
+
+      if (e is DioException) {
+        if (e.response?.statusCode == 401) {
+          errorMessage = 'Email atau kata sandi salah. Silakan coba lagi.';
+        } else if (e.response?.statusCode == 429) {
+          errorMessage = 'Terlalu banyak percobaan masuk. Tunggu 1 menit lalu coba lagi.';
+        } else if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          errorMessage = 'Tidak dapat terhubung. Periksa koneksi internet Anda.';
+        } else if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
+          errorMessage = 'Terjadi gangguan pada sistem. Silakan coba beberapa saat lagi.';
+        } else if (e.response?.data?['message'] != null) {
+          errorMessage = e.response!.data['message'].toString();
+        }
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.red,
-          content: Text('Login gagal. Periksa akun atau server.'),
+          content: Text(errorMessage),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } finally {
