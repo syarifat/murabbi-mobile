@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/constants/api_endpoints.dart';
 import 'core/theme/app_theme.dart';
 import 'features/admin/admin_main_nav.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/guru/guru_main_nav.dart';
 import 'features/ortu/ortu_main_nav.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiEndpoints.loadBaseUrl();
   runApp(const MurabbiApp());
 }
 

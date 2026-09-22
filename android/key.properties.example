@@ -1,0 +1,8 @@
+# Contoh konfigurasi penandatanganan rilis Android (key.properties)
+# Salin berkas ini menjadi 'key.properties' di dalam direktori 'android/' (bukan di dalam 'app/')
+# Pastikan 'key.properties' dan file keystore tidak pernah di-commit ke Git.
+
+keyAlias=murabbi-key
+keyPassword=KATA_SANDI_KEY_ANDA
+storeFile=upload-keystore.jks
+storePassword=KATA_SANDI_KEYSTORE_ANDA

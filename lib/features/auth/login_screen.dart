@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              'Bantuan & Akun',
+              'Bantuan Masuk',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -121,34 +121,26 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Gunakan email berikut untuk menguji coba berbagai peran di aplikasi:',
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.mid),
-            ),
-            const SizedBox(height: 12),
-            _buildRoleQuickItem(
-              'Guru',
-              'zidane@murabbi.id',
-              AppColors.primary,
-              AppColors.primaryPale,
-            ),
-            const SizedBox(height: 6),
-            _buildRoleQuickItem(
-              'Wali Murid',
-              'wali_1_1@murabbi.id',
-              AppColors.gold,
-              AppColors.goldPale,
-            ),
-            const SizedBox(height: 6),
-            _buildRoleQuickItem(
-              'Super Admin',
-              'admin@murabbi.id',
-              AppColors.blue,
-              AppColors.bluePale,
+              'Murabbi App digunakan oleh Guru, Wali Siswa, dan Pengelola Lembaga. Jika Anda memerlukan akun atau mengalami kendala masuk:',
+              style: GoogleFonts.inter(fontSize: 13, color: AppColors.mid, height: 1.4),
             ),
             const SizedBox(height: 14),
-            Text(
-              'Untuk pertanyaan atau pendaftaran siswa baru, hubungi Sekretariat Sekolah: +62 812-3456-7890.',
-              style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+            _buildHelpInfoItem(
+              Icons.school_outlined,
+              'Akun Guru & Pembimbing',
+              'Didaftarkan oleh bagian Akademik lembaga.',
+            ),
+            const SizedBox(height: 10),
+            _buildHelpInfoItem(
+              Icons.family_restroom_outlined,
+              'Akun Wali Siswa',
+              'Diberikan saat pendaftaran santri baru.',
+            ),
+            const SizedBox(height: 10),
+            _buildHelpInfoItem(
+              Icons.support_agent_outlined,
+              'Kontak Layanan',
+              'Sekretariat: +62 812-3456-7890',
             ),
           ],
         ),
@@ -168,37 +160,108 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildRoleQuickItem(String role, String email, Color color, Color bg) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _emailController.text = email;
-          _passwordController.text = 'password123';
-        });
-        Navigator.pop(context);
-      },
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  void _showForgotPasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
           children: [
-            Text(
-              role,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: color,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.goldPale,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.lock_reset_rounded,
+                color: AppColors.gold,
               ),
             ),
-            Text(email, style: GoogleFonts.inter(fontSize: 11, color: color)),
+            const SizedBox(width: 10),
+            Text(
+              'Pemulihan Sandi',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Untuk menjaga keamanan data santri dan lembaga, pengaturan ulang kata sandi dilakukan secara terverifikasi melalui Administrator Lembaga.',
+              style: GoogleFonts.inter(fontSize: 13, color: AppColors.mid, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Hubungi Administrator atau Tata Usaha untuk me-reset kata sandi akun Anda.',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.dark),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildHelpInfoItem(IconData icon, String title, String subtitle) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.dark,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -419,17 +482,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   InkWell(
-                                    onTap: () {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Silakan hubungi admin sekolah untuk reset kata sandi.',
-                                          ),
-                                        ),
-                                      );
-                                    },
+                                    onTap: _showForgotPasswordDialog,
                                     child: Text(
                                       'Lupa Sandi?',
                                       style: GoogleFonts.inter(
