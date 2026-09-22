@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/change_password_dialog.dart';
 import '../../widgets/app_confirm_dialog.dart';
+import '../../widgets/app_info_dialogs.dart';
 import '../auth/welcome_screen.dart';
 import 'rekap_perkembangan_screen.dart';
 
@@ -432,6 +433,24 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+
+                    // Kebijakan Privasi
+                    _buildProfileItem(
+                      Icons.shield_outlined,
+                      'Kebijakan Privasi',
+                      'Perlindungan data & keamanan informasi',
+                      onTap: () => showPrivacyPolicyDialog(context),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Pusat Bantuan
+                    _buildProfileItem(
+                      Icons.support_agent_outlined,
+                      'Pusat Bantuan',
+                      'Hubungi admin & dukungan teknis',
+                      onTap: () => showHelpSupportDialog(context),
+                    ),
                     const SizedBox(height: 24),
 
                     // Logout Button
@@ -464,6 +483,18 @@ class _ProfilOrtuScreenState extends State<ProfilOrtuScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Text(
+                        'v1.0.0',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),

@@ -171,7 +171,7 @@ class _MasterKelasScreenState extends State<MasterKelasScreen> {
     if ((kelas['santris_count'] as int? ?? 0) > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tidak bisa hapus kelas yang sudah memiliki santri'),
+          content: Text('Tidak bisa hapus kelas yang sudah memiliki siswa'),
           backgroundColor: AppColors.red,
         ),
       );

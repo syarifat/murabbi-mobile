@@ -100,7 +100,7 @@ class _EditSetoranScreenState extends State<EditSetoranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final santriName = widget.initialData['santri'] ?? 'Santri';
+    final santriName = widget.initialData['santri'] ?? 'Siswa';
     final surahName = widget.initialData['surah'] ?? 'Surah';
 
     return Scaffold(
@@ -116,9 +116,9 @@ class _EditSetoranScreenState extends State<EditSetoranScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Santri & Surah Info
+            // Siswa & Surah Info
             AppTextField(
-              label: 'NAMA SANTRI',
+              label: 'NAMA SISWA',
               hint: santriName,
               readOnly: true,
             ),

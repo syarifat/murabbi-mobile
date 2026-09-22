@@ -188,7 +188,7 @@ class _KelolaPenggunaScreenState extends State<KelolaPenggunaScreen> {
                 const SizedBox(height: 8),
                 AppTextField(
                   label: 'NAMA LENGKAP & GELAR',
-                  hint: 'Ust. Zulkifli, M.Ag',
+                  hint: 'Ahmad Zulkifli, S.Pd',
                   controller: _nameCtrl,
                 ),
                 const SizedBox(height: 12),

@@ -19,7 +19,7 @@ class GuruDashboardScreen extends StatefulWidget {
 
 class _GuruDashboardScreenState extends State<GuruDashboardScreen> {
   bool _isLoading = false;
-  String _guruName = 'Ust. Abdullah';
+  String _guruName = 'Guru';
   List<dynamic> _kelasBinaan = [];
   int _sudahSetor = 0;
   int _totalSantri = 0;

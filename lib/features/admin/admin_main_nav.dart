@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import 'admin_dashboard_screen.dart';
@@ -16,6 +17,7 @@ class AdminMainNav extends StatefulWidget {
 
 class _AdminMainNavState extends State<AdminMainNav> {
   int _currentIndex = 0;
+  DateTime? _lastBackPressTime;
 
   late final List<Widget> _screens;
 
@@ -33,27 +35,51 @@ class _AdminMainNavState extends State<AdminMainNav> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+          return;
+        }
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Tekan sekali lagi untuk keluar dari aplikasi'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+          return;
+        }
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, 'Dashboard', Icons.home_outlined, Icons.home),
-              _buildNavItem(1, 'Rombel', Icons.class_outlined, Icons.class_),
-              _buildNavItem(2, 'Mapping', Icons.person_pin_outlined, Icons.person_pin),
-              _buildNavItem(3, 'Master', Icons.layers_outlined, Icons.layers),
-              _buildNavItem(4, 'Laporan', Icons.bar_chart_outlined, Icons.bar_chart),
-            ],
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: SafeArea(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, 'Dashboard', Icons.home_outlined, Icons.home),
+                _buildNavItem(1, 'Rombel', Icons.class_outlined, Icons.class_),
+                _buildNavItem(2, 'Mapping', Icons.person_pin_outlined, Icons.person_pin),
+                _buildNavItem(3, 'Master', Icons.layers_outlined, Icons.layers),
+                _buildNavItem(4, 'Laporan', Icons.bar_chart_outlined, Icons.bar_chart),
+              ],
+            ),
           ),
         ),
       ),

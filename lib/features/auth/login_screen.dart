@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildHelpInfoItem(
               Icons.family_restroom_outlined,
               'Akun Wali Siswa',
-              'Diberikan saat pendaftaran santri baru.',
+              'Diberikan saat pendaftaran siswa baru.',
             ),
             const SizedBox(height: 10),
             _buildHelpInfoItem(
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Untuk menjaga keamanan data santri dan lembaga, pengaturan ulang kata sandi dilakukan secara terverifikasi melalui Administrator Lembaga.',
+              'Untuk menjaga keamanan data siswa dan lembaga, pengaturan ulang kata sandi dilakukan secara terverifikasi melalui Administrator Lembaga.',
               style: GoogleFonts.inter(fontSize: 13, color: AppColors.mid, height: 1.4),
             ),
             const SizedBox(height: 12),

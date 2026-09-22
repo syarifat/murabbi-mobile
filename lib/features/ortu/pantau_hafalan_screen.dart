@@ -70,7 +70,7 @@ class _PantauHafalanScreenState extends State<PantauHafalanScreen> {
             return {
               'date': t['waktu_setor']?.toString().split('T').first ?? '-',
               'surah': '$surahName ($ayatStr)',
-              'ustadz': t['guru']?['name'] ?? '-',
+              'guru': t['guru']?['name'] ?? '-',
               'status': statusStr.toUpperCase(),
               'variant': statusStr == 'lancar'
                   ? BadgeVariant.success
@@ -220,7 +220,7 @@ class _PantauHafalanScreenState extends State<PantauHafalanScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        '· ${item['ustadz']}',
+                                        '· ${item['guru']}',
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
                                           color: AppColors.muted,

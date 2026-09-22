@@ -7,6 +7,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../widgets/app_badge.dart';
 import '../../widgets/change_password_dialog.dart';
 import '../../widgets/app_confirm_dialog.dart';
+import '../../widgets/app_info_dialogs.dart';
 import '../auth/welcome_screen.dart';
 
 class ProfilGuruScreen extends StatefulWidget {
@@ -333,6 +334,20 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                       'Perbarui kata sandi login Anda',
                       onTap: () => showChangePasswordDialog(context),
                     ),
+                    const SizedBox(height: 10),
+                    _buildProfileItem(
+                      Icons.shield_outlined,
+                      'Kebijakan Privasi',
+                      'Perlindungan data & keamanan informasi',
+                      onTap: () => showPrivacyPolicyDialog(context),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildProfileItem(
+                      Icons.support_agent_outlined,
+                      'Pusat Bantuan',
+                      'Hubungi admin & dukungan teknis',
+                      onTap: () => showHelpSupportDialog(context),
+                    ),
                     const SizedBox(height: 24),
 
                     // Logout Button
@@ -359,6 +374,18 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Text(
+                        'v1.0.0',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),

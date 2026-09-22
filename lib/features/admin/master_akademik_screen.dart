@@ -9,6 +9,7 @@ import 'rombel_screen.dart';
 import 'daftar_surat_screen.dart';
 import 'riwayat_setoran_screen.dart';
 import '../../widgets/change_password_dialog.dart';
+import '../../widgets/app_info_dialogs.dart';
 
 class MasterAkademikScreen extends StatelessWidget {
   const MasterAkademikScreen({super.key});
@@ -156,6 +157,45 @@ class MasterAkademikScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const DaftarSuratScreen()),
               ),
             ),
+            const SizedBox(height: 24),
+            Text(
+              'INFORMASI & BANTUAN',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.muted,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildMenuCard(
+              context,
+              label: 'Kebijakan Privasi',
+              sub: 'Perlindungan data & keamanan informasi',
+              icon: Icons.shield_outlined,
+              color: AppColors.primary,
+              onTap: () => showPrivacyPolicyDialog(context),
+            ),
+            const SizedBox(height: 12),
+            _buildMenuCard(
+              context,
+              label: 'Pusat Bantuan',
+              sub: 'Kontak dukungan & panduan aplikasi',
+              icon: Icons.support_agent_outlined,
+              color: Colors.blueGrey,
+              onTap: () => showHelpSupportDialog(context),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                'v1.0.0',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

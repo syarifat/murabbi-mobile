@@ -195,7 +195,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                 const SizedBox(height: 8),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Ust. Zulkifli, M.Ag',
+                  hint: 'Ahmad Zulkifli, S.Pd',
                   controller: _nameCtrl,
                 ),
                 const SizedBox(height: 12),

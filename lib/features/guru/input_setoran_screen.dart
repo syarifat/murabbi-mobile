@@ -789,7 +789,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Surah yang telah tuntas dihafal santri dinonaktifkan (mati).',
+                      'Surah yang telah tuntas dihafal siswa dinonaktifkan (mati).',
                       style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
                     ),
                     const SizedBox(height: 12),
@@ -905,7 +905,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                                       ),
                                       subtitle: Text(
                                         isCompleted
-                                            ? 'Sudah Tuntas Diselesaikan Santri'
+                                            ? 'Sudah Tuntas Diselesaikan Siswa'
                                             : ((_lastAyatBySurah[surahId] ?? 0) > 0
                                                 ? 'Hafalan terakhir: Ayat 1-${_lastAyatBySurah[surahId]} · ${surah['jumlah_ayat']} Ayat'
                                                 : '${surah['jumlah_ayat']} Ayat · ${surah['tempat_turun'] ?? ""}'),
@@ -1047,11 +1047,12 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
         _completedSurahIds.add(_selectedSurahId!);
       }
 
-      // Tandai santri ini sudah setor hari ini
+      // Tandai siswa ini sudah setor hari ini
       if (_selectedSantriId != null) {
         _santriSudahSetorHariIniIds.add(_selectedSantriId!);
       }
 
+      HapticFeedback.lightImpact();
       _showSuccessDialog();
     } catch (e) {
       if (mounted) {
@@ -1124,7 +1125,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                 _autoAdjustSelectedSurah();
               },
               child: Text(
-                'Lanjut Input Santri Lain',
+                'Lanjut Input Siswa Lain',
                 style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
               ),
             ),
@@ -1219,9 +1220,9 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                   : const Icon(Icons.expand_more, color: AppColors.sub),
               onTap: (_isLoadingMasterData || _surahList.isEmpty) ? null : _showSurahPicker,
               helperText: _isLoadingHistory
-                  ? 'Memeriksa riwayat hafalan santri...'
+                  ? 'Memeriksa riwayat hafalan siswa...'
                   : (_completedSurahIds.isNotEmpty
-                      ? '${_completedSurahIds.length} surah telah diselesaikan oleh santri ini'
+                      ? '${_completedSurahIds.length} surah telah diselesaikan oleh siswa ini'
                       : null),
             ),
             const SizedBox(height: 12),
@@ -1261,7 +1262,7 @@ class _InputSetoranScreenState extends State<InputSetoranScreen> {
                         Expanded(
                           child: Text(
                             hasPrev
-                                ? 'Hafalan terakhir santri: Ayat 1-$lastAyat (Lanjut otomatis ayat ${lastAyat + 1} s/d $maxAyat)'
+                                ? 'Hafalan terakhir siswa: Ayat 1-$lastAyat (Lanjut otomatis ayat ${lastAyat + 1} s/d $maxAyat)'
                                 : 'Setoran awal surah ini: Ayat 1 s/d $maxAyat',
                             style: GoogleFonts.inter(
                               fontSize: 11,
