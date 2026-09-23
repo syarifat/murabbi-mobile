@@ -186,7 +186,7 @@ class WelcomeScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'MURABBI',
+                                'MUROBBI-QU',
                                 style: GoogleFonts.inter(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w900,
@@ -359,7 +359,7 @@ class WelcomeScreen extends StatelessWidget {
 
                           // Footer Tag
                           Text(
-                            'Murabbi v1.0 · Sekolah Digital Ecosystem',
+                            'Murobbi-Qu v1.0 · Sekolah Digital Ecosystem',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: AppColors.sub,

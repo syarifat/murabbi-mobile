@@ -1,4 +1,4 @@
-package com.murabbi.app.murabbi_mobile
+package com.murobbiqu.app
 
 import io.flutter.embedding.android.FlutterActivity
 

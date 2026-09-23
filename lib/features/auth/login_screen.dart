@@ -19,10 +19,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(
-    text: 'zidane@murabbi.id',
-  );
-  final _passwordController = TextEditingController(text: 'password123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _rememberMe = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -143,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Murabbi App digunakan oleh Guru, Wali Siswa, dan Pengelola Lembaga. Jika Anda memerlukan akun atau mengalami kendala masuk:',
+              'Murobbi-Qu digunakan oleh Guru, Wali Siswa, dan Pengelola Lembaga. Jika Anda memerlukan akun atau mengalami kendala masuk:',
               style: GoogleFonts.inter(fontSize: 13, color: AppColors.mid, height: 1.4),
             ),
             const SizedBox(height: 14),
@@ -443,7 +441,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: AppColors.dark,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'nama@sekolah.id',
+                                  hintText: 'guru1@gmail.com',
                                   filled: true,
                                   fillColor: Colors.white,
                                   prefixIcon: const Icon(

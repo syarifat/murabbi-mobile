@@ -14,17 +14,17 @@ import 'features/ortu/ortu_main_nav.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiEndpoints.loadBaseUrl();
-  runApp(const MurabbiApp());
+  runApp(const MurobbiQuApp());
 }
 
-class MurabbiApp extends StatelessWidget {
-  const MurabbiApp({super.key});
+class MurobbiQuApp extends StatelessWidget {
+  const MurobbiQuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: ApiClient.navigatorKey,
-      title: 'Murabbi App',
+      title: 'Murobbi-Qu',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       builder: (context, child) {
@@ -93,7 +93,7 @@ class _StartupGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Murabbi App',
+                    'Murobbi-Qu',
                     style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,

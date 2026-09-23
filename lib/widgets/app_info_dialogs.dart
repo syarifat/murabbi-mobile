@@ -37,7 +37,7 @@ void showPrivacyPolicyDialog(BuildContext context) {
             ),
             const SizedBox(height: 6),
             Text(
-              'Murabbi App berkomitmen untuk menjaga keamanan dan kerahasiaan data pribadi pengguna, siswa, serta guru dengan standar keamanan terbaik.',
+              'Murobbi-Qu berkomitmen untuk menjaga keamanan dan kerahasiaan data pribadi pengguna, siswa, serta guru dengan standar keamanan terbaik.',
               style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -112,7 +112,7 @@ void showHelpSupportDialog(BuildContext context) {
             style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
           ),
           const SizedBox(height: 16),
-          _buildContactRow(Icons.email_outlined, 'Email Support', 'support@murabbi.id'),
+          _buildContactRow(Icons.email_outlined, 'Email Support', 'support.murobbiqu@gmail.com'),
           const SizedBox(height: 10),
           _buildContactRow(Icons.chat_outlined, 'WhatsApp Admin', '+62 812-3456-7890'),
           const SizedBox(height: 10),

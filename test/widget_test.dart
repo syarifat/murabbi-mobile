@@ -5,7 +5,7 @@ import 'package:murabbi_mobile/main.dart';
 
 void main() {
   testWidgets(
-    'MurabbiApp smoke test - verifies welcome screen and login navigation',
+    'MurobbiQuApp smoke test - verifies welcome screen and login navigation',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       tester.view.physicalSize = const Size(1080, 2400);
@@ -15,10 +15,10 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      await tester.pumpWidget(const MurabbiApp());
+      await tester.pumpWidget(const MurobbiQuApp());
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('MURABBI'), findsOneWidget);
+      expect(find.text('MUROBBI-QU'), findsOneWidget);
       expect(find.text('Mulai Sekarang'), findsOneWidget);
     },
   );

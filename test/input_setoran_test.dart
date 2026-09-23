@@ -17,7 +17,7 @@ void main() {
         home: InputSetoranScreen(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     // Verify presence of InputSetoranScreen elements
     expect(find.text('Input Setoran Hafalan'), findsOneWidget);

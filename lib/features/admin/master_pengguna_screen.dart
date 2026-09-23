@@ -195,13 +195,13 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                 const SizedBox(height: 8),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Ahmad Zulkifli, S.Pd',
+                  hint: 'Nama Guru / Admin',
                   controller: _nameCtrl,
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'EMAIL',
-                  hint: 'zulkifli@sekolah.ac.id',
+                  hint: 'guru1@gmail.com',
                   controller: _emailCtrl,
                 ),
                 const SizedBox(height: 12),
@@ -380,13 +380,13 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Masukkan nama lengkap',
+                  hint: 'Nama Guru / Admin',
                   controller: _nameCtrl,
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'EMAIL',
-                  hint: 'email@sekolah.ac.id',
+                  hint: 'guru1@gmail.com',
                   controller: _emailCtrl,
                 ),
                 const SizedBox(height: 12),
@@ -537,7 +537,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
     final confirmed = await AppConfirmDialog.show(
       context: context,
       title: 'Reset Kata Sandi?',
-      message: 'Kata sandi untuk $name akan direset menjadi default: "murabbiapp".',
+      message: 'Kata sandi untuk $name akan direset menjadi default: "murobbiqu".',
       confirmLabel: 'Reset Sandi',
       cancelLabel: 'Batal',
       confirmColor: const Color(0xFFD97706),
@@ -551,7 +551,7 @@ class _MasterPenggunaScreenState extends State<MasterPenggunaScreen> {
         ApiEndpoints.resetUserPassword(userId as int),
       );
 
-      final msg = response.data['message']?.toString() ?? 'Kata sandi berhasil direset menjadi "murabbiapp".';
+      final msg = response.data['message']?.toString() ?? 'Kata sandi berhasil direset menjadi "murobbiqu".';
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.murabbi.app" "\0"
-            VALUE "FileDescription", "murabbi_mobile" "\0"
+            VALUE "CompanyName", "com.murobbiqu.app" "\0"
+            VALUE "FileDescription", "Murobbi-Qu" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "murabbi_mobile" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.murabbi.app. All rights reserved." "\0"
-            VALUE "OriginalFilename", "murabbi_mobile.exe" "\0"
-            VALUE "ProductName", "murabbi_mobile" "\0"
+            VALUE "InternalName", "Murobbi-Qu" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.murobbiqu.app. All rights reserved." "\0"
+            VALUE "OriginalFilename", "murobbi_qu.exe" "\0"
+            VALUE "ProductName", "Murobbi-Qu" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -167,7 +167,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
         payload['wali_nama'] = _waliNamaCtrl.text.trim();
         payload['wali_email'] = _waliEmailCtrl.text.trim().isNotEmpty
             ? _waliEmailCtrl.text.trim()
-            : '${_nisCtrl.text.trim()}@wali.local';
+            : 'wali.${_nisCtrl.text.trim()}@gmail.com';
         payload['wali_hp'] = _waliHpCtrl.text.trim().isNotEmpty ? _waliHpCtrl.text.trim() : null;
         payload['wali_password'] = _waliPasswordCtrl.text.trim().isNotEmpty
             ? _waliPasswordCtrl.text.trim()
@@ -257,7 +257,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                 _sectionTitle('DATA SISWA'),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Nama lengkap siswa',
+                  hint: 'Nama Siswa',
                   controller: _namaCtrl,
                 ),
                 const SizedBox(height: 12),
@@ -312,13 +312,13 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                   const SizedBox(height: 12),
                   AppTextField(
                     label: 'NAMA ORANG TUA / WALI',
-                    hint: 'Nama lengkap ortu',
+                    hint: 'Nama Orang Tua / Wali',
                     controller: _waliNamaCtrl,
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
                     label: 'EMAIL ORANG TUA',
-                    hint: 'email.ortu@mail.com',
+                    hint: 'wali1@gmail.com',
                     controller: _waliEmailCtrl,
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -454,7 +454,7 @@ class _MasterSantriScreenState extends State<MasterSantriScreen> {
                 _sectionTitle('DATA SISWA'),
                 AppTextField(
                   label: 'NAMA LENGKAP',
-                  hint: 'Nama lengkap siswa',
+                  hint: 'Nama Siswa',
                   controller: _namaCtrl,
                 ),
                 const SizedBox(height: 12),
