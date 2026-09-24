@@ -51,6 +51,7 @@ class ApiEndpoints {
   static String santriDelete(int id) => '$baseUrl/admin/santris/$id';
   static String get mappingGuru => '$baseUrl/admin/mapping';
   static String get laporanGlobal => '$baseUrl/admin/laporan';
+  static String get laporanExportCsv => '$baseUrl/admin/laporan/export-csv';
 
   // Master Data
   static String get masterOrtu => '$baseUrl/admin/master/ortu';
